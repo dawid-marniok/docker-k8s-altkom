@@ -1,0 +1,8 @@
+# Wersja „na skróty”: kompilujemy i uruchamiamy w tym samym obrazie.
+# W obrazie zostaje cały kompilator Go — sprawdź, ile to waży.
+FROM golang:1.25
+WORKDIR /src
+COPY . .
+RUN go build -o /hello .
+EXPOSE 8080
+CMD ["/hello"]

@@ -1,0 +1,20 @@
+# Traefik jako Ingress Controller na kind: słucha bezpośrednio na portach 80/443 węzła control-plane.
+deployment:
+  replicas: 1
+service:
+  spec:
+    type: ClusterIP
+ports:
+  web:
+    hostPort: 80
+  websecure:
+    hostPort: 443
+nodeSelector:
+  ingress-ready: "true"
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+ingressClass:
+  enabled: true
+  isDefaultClass: true

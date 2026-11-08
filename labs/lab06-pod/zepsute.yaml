@@ -1,0 +1,31 @@
+# Trzy pody, każdy z innym problemem. Nie poprawiaj na ślepo — najpierw znajdź przyczynę.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zepsuty-1
+spec:
+  containers:
+    - name: app
+      image: nginx:1.299
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zepsuty-2
+spec:
+  containers:
+    - name: app
+      image: busybox:1.37
+      command: ["sh", "-c", "echo start; cat /konfiguracja/app.conf"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zepsuty-3
+spec:
+  containers:
+    - name: app
+      image: nginx:1.29
+      resources:
+        requests:
+          memory: 64Gi

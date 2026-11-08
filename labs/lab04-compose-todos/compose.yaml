@@ -1,0 +1,23 @@
+# ToDos — wersja startowa. Uzupełnij według README.md w tym katalogu.
+name: todos
+
+services:
+  mongo:
+    image: mongo:7.0
+    # TODO (krok 3): wolumen na dane w /data/db
+    # TODO (krok 4): healthcheck
+
+  api:
+    build: ../../app/todos/api
+    image: todos-api:1.0
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      APP_VERSION: "1.0"
+    # TODO (krok 4): start dopiero, gdy mongo jest zdrowe
+
+  # TODO (krok 2): usługa web
+  #   - build z ../../app/todos/web, obraz todos-web:1.0
+  #   - port 8080 na laptopie -> 8080 w kontenerze
+  #   - startuje po api
+
+# TODO (krok 3): sekcja volumes

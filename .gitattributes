@@ -1,0 +1,4 @@
+# Wszystkie pliki tekstowe z końcami linii LF — także na Windows (Git Bash nie uruchomi skryptu .sh z CRLF).
+* text=auto eol=lf
+*.jpg binary
+*.png binary

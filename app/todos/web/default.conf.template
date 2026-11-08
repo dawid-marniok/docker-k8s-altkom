@@ -1,0 +1,20 @@
+# Szablon konfiguracji nginx. Obraz nginx przy starcie podstawia zmienne środowiskowe
+# (${API_URL}) i zapisuje wynik do /etc/nginx/conf.d/default.conf.
+server {
+    listen 8080;
+    root /usr/share/nginx/html;
+
+    location / {
+        try_files $uri /index.html;
+    }
+
+    # wszystko pod /api/ idzie do backendu — przeglądarka zna tylko jeden adres
+    location /api/ {
+        proxy_pass ${API_URL};
+    }
+
+    location = /healthz {
+        access_log off;
+        return 200 "ok\n";
+    }
+}
