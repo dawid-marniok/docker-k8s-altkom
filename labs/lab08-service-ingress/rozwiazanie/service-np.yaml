@@ -1,0 +1,13 @@
+# Lab08 krok 4: NodePort — ten sam selektor co Service hello, port otwarty na każdym węźle
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-np
+spec:
+  type: NodePort
+  selector:
+    app: hello
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080   # bez tego pola Kubernetes wybierze wolny port z zakresu 30000–32767

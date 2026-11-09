@@ -21,3 +21,9 @@ curl http://todos.localhost/api/info
 - `readinessProbe` na `/readyz` — API dostaje ruch dopiero, gdy połączy się z bazą. `livenessProbe` na `/healthz` sprawdza tylko, czy proces żyje — inaczej awaria bazy restartowałaby wszystkie pody API.
 - `MONGO_URL` jest w Secrecie, bo w prawdziwej aplikacji zawiera login i hasło do bazy.
 - Etykieta `part-of: todos` na każdym obiekcie pozwala jednym poleceniem pokazać i usunąć całą aplikację.
+
+## Dla chętnych
+
+[`dla-chetnych/04-hpa.yaml`](dla-chetnych/04-hpa.yaml) — HPA dla `api`. Leży w podkatalogu, więc `kubectl apply -f rozwiazanie/` go nie wdraża. Ręcznie: `kubectl apply -f rozwiazanie/dla-chetnych/04-hpa.yaml`.
+
+Gdy działa HPA, liczbą replik `api` steruje on. `replicas: 2` w `02-api.yaml` przy kolejnym `apply` na chwilę ją nadpisze, a HPA zaraz ją poprawi. W projektach z HPA pole `replicas` zwykle usuwa się z Deploymentu.

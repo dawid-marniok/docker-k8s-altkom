@@ -107,9 +107,9 @@ Otwórz http://todos.localhost i dodaj kilka zadań.
 
 ## Dla chętnych
 
-1. **Nowa wersja bez przerwy:** zmień `APP_VERSION` w ConfigMap na `"1.1"`, zrób `kubectl rollout restart deploy/api` i obserwuj stronę.
-2. **Rollback:** ustaw w Deploymencie obraz `todos-api:2.0` (nie istnieje). Co się dzieje ze stroną? Cofnij `kubectl rollout undo deploy/api`.
-3. **Autoskalowanie:** `kubectl autoscale deploy api --min=2 --max=5 --cpu=50%`, potem `kubectl get hpa -w`.
+1. **Nowa wersja bez przerwy:** w `02-api.yaml` zmień w ConfigMap `APP_VERSION` na `"1.1"`, zrób `kubectl apply -f 02-api.yaml`, potem `kubectl rollout restart deploy/api` i obserwuj stronę (zmienne z ConfigMap pod czyta tylko przy starcie).
+2. **Rollback:** w `02-api.yaml` ustaw obraz `todos-api:2.0` (nie istnieje) i zrób `apply`. Co się dzieje ze stroną? Cofnij `kubectl rollout undo deploy/api`, a potem przywróć w pliku `todos-api:1.0` — inaczej następny `apply` znowu wdroży złą wersję.
+3. **Autoskalowanie:** utwórz `04-hpa.yaml` z HorizontalPodAutoscalerem dla Deploymentu `api` (2–5 replik, 50% CPU), zrób `apply`, potem `kubectl get hpa -w`. Wzór: [`rozwiazanie/dla-chetnych/04-hpa.yaml`](rozwiazanie/dla-chetnych/04-hpa.yaml).
 4. **Gdzie jest dysk?** `kubectl get pv`, `kubectl describe pvc mongo-data`.
 
 ## Gdy coś nie działa
@@ -129,7 +129,6 @@ Gotowe manifesty: [`rozwiazanie/`](rozwiazanie/). Zajrzyj, gdy utkniesz, albo po
 ## Sprzątanie (dopiero po zakończeniu szkolenia)
 
 ```bash
-kubectl delete all,ingress,configmap,secret,pvc -l part-of=todos
-kubectl delete hpa api --ignore-not-found   # jeśli robiłeś autoskalowanie
+kubectl delete all,ingress,configmap,secret,pvc,hpa -l part-of=todos
 ./setup/start-klastra.sh --usun        # z głównego katalogu repo: usuwa cały klaster
 ```

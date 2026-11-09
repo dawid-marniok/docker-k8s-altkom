@@ -1,0 +1,19 @@
+# HPA: od 1 do 5 replik liczydła, cel — średnio 50% CPU z requests (100m), czyli ok. 50m na pod
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: liczydlo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: liczydlo
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50

@@ -22,8 +22,10 @@ kubectl get pods -w
 
 ### 2. Rolling update
 
+W `deployment.yaml` zmień obraz na `traefik/whoami:v1.11.0`, potem:
+
 ```bash
-kubectl set image deploy/whoami whoami=traefik/whoami:v1.11.0
+kubectl apply -f deployment.yaml
 kubectl rollout status deploy/whoami
 kubectl get rs                    # nowy ReplicaSet: 4, stary: 0 (zostaje do rollbacku)
 kubectl rollout history deploy/whoami
@@ -33,15 +35,18 @@ W terminalu 2 widać, że nowe pody pojawiają się, zanim znikną stare.
 
 ### 3. Zła wersja i rollback
 
+W `deployment.yaml` zmień obraz na `traefik/whoami:v9.9` (nie istnieje), potem:
+
 ```bash
-kubectl set image deploy/whoami whoami=traefik/whoami:v9.9
+kubectl apply -f deployment.yaml
 kubectl get pods                  # 2 nowe w ErrImagePull, 3 stare dalej Running (czwarty stary chwilę jako Error/Terminating — to wyłączany pod)
 kubectl rollout undo deploy/whoami
 kubectl rollout status deploy/whoami
 ```
 
 Rolling update nie wyłączył starych podów, bo nowe nie przeszły sondy gotowości. `maxUnavailable` 25% z 4 to 1 pod mniej, reszta obsługuje ruch.
-Ostrzeżenie o `last-applied-configuration` przy `undo` jest w porządku — w kolejnym kroku i tak wracamy do pliku.
+
+`rollout undo` zmienia klaster, ale nie plik — stąd ostrzeżenie o `last-applied-configuration`. W `deployment.yaml` wpisz z powrotem `v1.11.0`, inaczej kolejny `apply` znowu wdroży `v9.9`.
 
 ### 4. Konfiguracja z ConfigMap
 
@@ -71,7 +76,7 @@ Zmienne środowiskowe są czytane przy starcie kontenera. Po zmianie ConfigMap t
 
 ## Sprzątanie
 
-Zakomentuj z powrotem `envFrom` w `deployment.yaml`, potem:
+Przywróć w `deployment.yaml` obraz `traefik/whoami:v1.10.4` i zakomentuj z powrotem `envFrom`, w `configmap.yaml` przywróć `demo-na-szkoleniu`, potem:
 
 ```bash
 kubectl delete -f . --now

@@ -4,8 +4,13 @@
 Katalog `labs/lab08-service-ingress/` · potrzebny Deployment `hello` z lab07
 
 ```bash
-kubectl get deploy hello     # jeśli go nie ma: kubectl apply -f ../lab07-deployment-konfiguracja/deployment.yaml
-kubectl scale deploy hello --replicas=3
+kubectl get deploy hello     # 2/2 READY
+```
+
+Nie masz `hello` albo pody nie są gotowe? Wdróż rozwiązanie lab07 (Deployment, ConfigMap i Secret naraz):
+
+```bash
+kubectl apply -f ../lab07-deployment-konfiguracja/rozwiazanie/
 ```
 
 ## 1. Service ClusterIP
@@ -31,7 +36,7 @@ kubectl get svc hello
 kubectl get endpointslices -l kubernetes.io/service-name=hello
 ```
 
-**Sprawdź:** w EndpointSlice są 3 adresy IP — po jednym na pod.
+**Sprawdź:** w EndpointSlice są 2 adresy IP — po jednym na pod `hello`. Porównaj z `kubectl get pods -l app=hello -o wide`.
 
 ## 2. Test z wnętrza klastra
 
@@ -44,7 +49,7 @@ wget -qO- http://hello.szkolenie.svc.cluster.local | grep 'Server name'
 exit
 ```
 
-**Sprawdź:** odpowiadają różne pody. Service rozkłada ruch i znajduje się po nazwie (DNS klastra).
+**Sprawdź:** odpowiadają różne pody. Service rozkłada ruch losowo, więc przy dwóch podach ten sam może odpowiedzieć kilka razy z rzędu — powtórz `wget`. Service znajduje się po nazwie (DNS klastra).
 
 ## 3. Selektor to wszystko
 
@@ -58,13 +63,31 @@ Pusto — Service istnieje, ale nie ma dokąd wysłać ruchu. To najczęstszy b�
 
 ## 4. NodePort (dla porównania)
 
-```bash
-kubectl expose deploy hello --name=hello-np --type=NodePort --port=80
-kubectl get svc hello-np        # zapamiętaj port 3xxxx
-docker exec szkolenie-worker curl -s localhost:<port> | head -3
+Utwórz `service-np.yaml` — drugi Service dla tych samych podów, tym razem typu NodePort:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-np
+spec:
+  type: NodePort
+  selector:
+    app: hello
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080   # port otwarty na każdym węźle (zakres 30000–32767)
 ```
 
-Pusta odpowiedź zaraz po `expose`? Klaster potrzebuje kilku sekund na ustawienie reguł — powtórz polecenie.
+```bash
+kubectl apply -f service-np.yaml
+kubectl get svc hello-np        # PORT(S): 80:30080/TCP
+docker exec szkolenie-worker curl -s localhost:30080 | head -3
+```
+
+Pusta odpowiedź zaraz po `apply`? Klaster potrzebuje kilku sekund na ustawienie reguł — powtórz polecenie.
+`provided port is already allocated`? Port 30080 jest zajęty — wpisz inny z zakresu albo usuń linię `nodePort`, a Kubernetes wybierze go sam.
 
 Na kind węzły to kontenery, więc NodePort sprawdzamy „z węzła”. W prawdziwym klastrze to port otwarty na każdym węźle.
 
@@ -103,11 +126,11 @@ Otwórz http://hello.localhost w przeglądarce. Adresy `*.localhost` zawsze wska
 
 ## 6. Dwie aplikacje pod jednym adresem
 
-Utwórz drugi Deployment i Service:
+Druga aplikacja jest gotowa w pliku `echo.yaml`: Deployment `echo` (obraz `hashicorp/http-echo`, odpowiada stałym tekstem) i Service `echo`. Przejrzyj plik: kontener słucha na porcie **5678**, a Service wystawia go na porcie **80** (`port` → `targetPort`).
 
 ```bash
-kubectl create deployment echo --image=hashicorp/http-echo:1.0 -- /http-echo -text="to jest echo" -listen=:5678
-kubectl expose deployment echo --port=80 --target-port=5678
+kubectl apply -f echo.yaml
+kubectl get deploy,svc,endpointslices -l app=echo
 ```
 
 Dodaj do Ingressu drugą ścieżkę `/echo` prowadzącą do Service `echo` i zrób `kubectl apply -f ingress.yaml`.
@@ -124,17 +147,19 @@ W tej samej regule `host: hello.localhost`, pod `paths:`, dopisz drugi element l
 ## Dla chętnych
 
 - `kubectl describe ingress hello` — gdzie widać, do jakich podów trafi ruch?
-- Przeskaluj `hello` do 0 replik i otwórz stronę. Jaki błąd zwraca Ingress?
+- Ustaw `replicas: 0` w `../lab07-deployment-konfiguracja/deployment.yaml`, zrób `apply` i otwórz stronę. Jaki błąd zwraca Ingress? Potem przywróć 2 repliki.
 - Podejrzyj Ingress Controller: `kubectl get pods,svc -n traefik`.
 
 ## Sprzątanie
 
+Usuwamy wszystko, co opisują pliki z tego labu i z lab07 (Deployment `hello`, ConfigMap, Secret):
+
 ```bash
-kubectl delete ingress hello
-kubectl delete svc hello hello-np echo
-kubectl delete deploy hello echo
-kubectl delete configmap hello-config --ignore-not-found
-kubectl delete secret hello-secret --ignore-not-found
+kubectl delete -f . --ignore-not-found
+kubectl delete -f ../lab07-deployment-konfiguracja/ --ignore-not-found
+kubectl get all,ingress,configmap,secret     # zostaje tylko configmap/kube-root-ca.crt
 ```
 
-Rozwiązanie (Ingress po kroku 6): [`rozwiazanie/ingress.yaml`](rozwiazanie/ingress.yaml).
+`delete -f <katalog>` bierze wszystkie pliki YAML z katalogu (bez podkatalogów, więc `rozwiazanie/` zostaje nietknięte).
+
+Rozwiązanie: [`rozwiazanie/`](rozwiazanie/) — `service.yaml` (krok 1), `service-np.yaml` (krok 4), `ingress.yaml` (po kroku 6).

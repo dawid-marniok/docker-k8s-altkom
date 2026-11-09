@@ -1,7 +1,7 @@
 # Autoskalowanie z HPA
 
 **Cel:** HPA zwiększa liczbę podów, gdy zużycie CPU przekracza próg liczony od `requests`.
-**Pliki:** `app.yaml` — aplikacja „liczydło” (Python, każde żądanie to chwila liczenia) i jej Service.
+**Pliki:** `app.yaml` — aplikacja „liczydło” (Python, każde żądanie to chwila liczenia) i jej Service; `hpa.yaml` — HorizontalPodAutoscaler dla niej.
 
 Wymaga metrics-server (jest w klastrze ze `setup/start-klastra.sh`). Przydadzą się dwa terminale.
 
@@ -12,7 +12,7 @@ Wymaga metrics-server (jest w klastrze ze `setup/start-klastra.sh`). Przydadzą 
 ```bash
 kubectl apply -f app.yaml
 kubectl rollout status deploy/liczydlo
-kubectl autoscale deploy liczydlo --min=1 --max=5 --cpu=50%
+kubectl apply -f hpa.yaml                # 1–5 replik, cel 50% CPU z requests
 ```
 
 Terminal 2:
@@ -46,6 +46,5 @@ HPA patrzy na % z `requests`, nie z `limits`. Bez `requests` pokaże `<unknown>`
 ## Sprzątanie
 
 ```bash
-kubectl delete hpa liczydlo
 kubectl delete -f . --now
 ```

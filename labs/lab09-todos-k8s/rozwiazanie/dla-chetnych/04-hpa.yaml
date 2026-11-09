@@ -1,0 +1,22 @@
+# Lab09 dla chętnych: HPA dla API — od 2 do 5 replik, cel 50% CPU liczone od requests (50m)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api
+  labels:
+    app: api
+    part-of: todos
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50

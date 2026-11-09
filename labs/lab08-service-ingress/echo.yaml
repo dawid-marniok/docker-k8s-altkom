@@ -1,0 +1,46 @@
+# Druga aplikacja do kroku 6: http-echo odpowiada stałym tekstem.
+# Kontener słucha na 5678, a Service wystawia go na porcie 80.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo
+  labels:
+    app: echo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo
+  template:
+    metadata:
+      labels:
+        app: echo
+    spec:
+      containers:
+        - name: echo
+          image: hashicorp/http-echo:1.0
+          args:
+            - -text=to jest echo
+            - -listen=:5678
+          ports:
+            - containerPort: 5678
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 32Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo
+  labels:
+    app: echo
+spec:
+  selector:
+    app: echo
+  ports:
+    - port: 80          # port Service: pod tym adresem pytają inni (i Ingress)
+      targetPort: 5678  # port kontenera
