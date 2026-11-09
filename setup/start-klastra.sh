@@ -11,6 +11,24 @@ if [[ ${1:-} == --usun ]]; then
   exit 0
 fi
 
+# Windows (Git Bash): brakujące kind/kubectl pobieramy do ~/bin — bez winget i bez uprawnień administratora
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    export PATH="$HOME/bin:$PATH"
+    declare -A url=(
+      [kind]=https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-windows-amd64
+      [kubectl]=https://dl.k8s.io/release/v1.37.0/bin/windows/amd64/kubectl.exe
+    )
+    for t in kind kubectl; do
+      command -v "$t" >/dev/null && continue
+      echo "▶ Brak $t — pobieram do ~/bin"
+      mkdir -p "$HOME/bin"
+      curl -fsSLo "$HOME/bin/$t.exe" "${url[$t]}" || { echo "❌ Nie udało się pobrać $t (sprawdź internet)"; exit 1; }
+      grep -qs 'HOME/bin' "$HOME/.bashrc" || echo 'export PATH="$HOME/bin:$PATH"' >> "$HOME/.bashrc"
+    done
+    ;;
+esac
+
 for t in docker kind kubectl helm; do
   command -v "$t" >/dev/null || { echo "❌ Brak narzędzia: $t (zobacz setup/README.md)"; exit 1; }
 done
