@@ -60,7 +60,12 @@ API przez chwilę pisze „Baza niedostępna”. Dodaj do `mongo` healthcheck:
 
 ```yaml
 healthcheck:
-  test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+  test:
+    - CMD
+    - mongosh
+    - --quiet
+    - --eval
+    - db.adminCommand('ping').ok
   interval: 5s
   retries: 10
 ```

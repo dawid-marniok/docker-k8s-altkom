@@ -16,7 +16,10 @@ spec:
   containers:
     - name: app
       image: busybox:1.37
-      command: ["sh", "-c", "echo start; cat /konfiguracja/app.conf"]
+      command:
+        - sh
+        - -c
+        - echo start; cat /konfiguracja/app.conf
 ---
 apiVersion: v1
 kind: Pod

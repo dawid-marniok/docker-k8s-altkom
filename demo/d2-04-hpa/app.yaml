@@ -16,7 +16,9 @@ spec:
       containers:
         - name: app
           image: python:3.13-alpine
-          command: ["python", "-c"]
+          command:
+            - python
+            - -c
           args:
             - |
               import socket

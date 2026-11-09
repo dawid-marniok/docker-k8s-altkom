@@ -32,7 +32,9 @@ kubectl logs para -c sonda        # co 5 s: <!DOCTYPE html>
 
 ```yaml
       readinessProbe:
-        httpGet: { path: /, port: 80 }
+        httpGet:
+          path: /
+          port: 80
         periodSeconds: 5
 ```
 

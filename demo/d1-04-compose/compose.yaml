@@ -1,11 +1,14 @@
 # Dwie usługi, wolumen i DNS po nazwie usługi.
 services:
-  web:
-    image: nginx:1.29
-    ports: ["8080:80"]
+  adminer:
+    image: adminer:5
+    ports:
+      - "8080:8080"
   db:
     image: postgres:17
-    environment: {POSTGRES_PASSWORD: demo}
-    volumes: [dane:/var/lib/postgresql/data]
+    environment:
+      POSTGRES_PASSWORD: demo
+    volumes:
+      - dane:/var/lib/postgresql/data
 volumes:
   dane:

@@ -40,7 +40,7 @@ kubectl get pvc,pods -l app=mongo
 
 PVC przez pierwsze sekundy ma status `Pending` — to normalne: dysk powstaje dopiero, gdy pod bazy trafi na węzeł. Po chwili: `Bound` i pod `Running`.
 
-> **Etykiety:** każdy obiekt w `01-mongo.yaml` ma `labels: { app: mongo, part-of: todos }`. Nadaj tak samo `part-of: todos` wszystkim obiektom, które napiszesz w krokach 2 i 3 (a `app: api` / `app: web` odpowiednio). Dzięki temu zadziała sprawdzanie `kubectl get all -l part-of=todos` i sprzątanie na końcu. `01-mongo.yaml` to też dobry wzór składni Deploymentu i Service.
+> **Etykiety:** każdy obiekt w `01-mongo.yaml` ma etykiety `app: mongo` i `part-of: todos`. Nadaj tak samo `part-of: todos` wszystkim obiektom, które napiszesz w krokach 2 i 3 (a `app: api` / `app: web` odpowiednio). Dzięki temu zadziała sprawdzanie `kubectl get all -l part-of=todos` i sprzątanie na końcu. `01-mongo.yaml` to też dobry wzór składni Deploymentu i Service.
 
 ## Krok 2. API — napisz `02-api.yaml`
 
@@ -57,12 +57,18 @@ Wymagania:
 
 ```yaml
           envFrom:
-            - configMapRef: { name: api-config }
-            - secretRef:    { name: api-secret }
+            - configMapRef:
+                name: api-config
+            - secretRef:
+                name: api-secret
           readinessProbe:
-            httpGet: { path: /readyz, port: 3000 }
+            httpGet:
+              path: /readyz
+              port: 3000
           livenessProbe:
-            httpGet: { path: /healthz, port: 3000 }
+            httpGet:
+              path: /healthz
+              port: 3000
 ```
 </details>
 
