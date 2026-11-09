@@ -23,7 +23,8 @@ case "$(uname -s)" in
       command -v "$t" >/dev/null && continue
       echo "▶ Brak $t — pobieram do ~/bin"
       mkdir -p "$HOME/bin"
-      curl -fsSLo "$HOME/bin/$t.exe" "${url[$t]}" || { echo "❌ Nie udało się pobrać $t (sprawdź internet)"; exit 1; }
+      # curl to program Windows, a MSYS_NO_PATHCONV=1 wyłącza zamianę ścieżek — podajemy ścieżkę w formie C:/...
+      curl -fsSLo "$(cygpath -m "$HOME/bin/$t.exe")" "${url[$t]}" || { echo "❌ Nie udało się pobrać $t (sprawdź internet)"; exit 1; }
       grep -qs 'HOME/bin' "$HOME/.bashrc" || echo 'export PATH="$HOME/bin:$PATH"' >> "$HOME/.bashrc"
     done
     ;;
