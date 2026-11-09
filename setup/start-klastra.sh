@@ -11,20 +11,31 @@ if [[ ${1:-} == --usun ]]; then
   exit 0
 fi
 
-# Windows (Git Bash): brakujące kind/kubectl pobieramy do ~/bin — bez winget i bez uprawnień administratora
+# Windows (Git Bash): brakujące kind/kubectl/helm pobieramy do ~/bin — bez winget i bez uprawnień administratora
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*)
     export PATH="$HOME/bin:$PATH"
     declare -A url=(
       [kind]=https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-windows-amd64
       [kubectl]=https://dl.k8s.io/release/v1.37.0/bin/windows/amd64/kubectl.exe
+      [helm]=https://get.helm.sh/helm-v4.3.0-windows-amd64.zip
     )
-    for t in kind kubectl; do
+    # curl i tar.exe to programy Windows, a MSYS_NO_PATHCONV=1 wyłącza zamianę ścieżek — podajemy je w formie C:/...
+    bin=$(cygpath -m "$HOME/bin")
+    for t in kind kubectl helm; do
       command -v "$t" >/dev/null && continue
       echo "▶ Brak $t — pobieram do ~/bin"
       mkdir -p "$HOME/bin"
-      # curl to program Windows, a MSYS_NO_PATHCONV=1 wyłącza zamianę ścieżek — podajemy ścieżkę w formie C:/...
-      curl -fsSLo "$(cygpath -m "$HOME/bin/$t.exe")" "${url[$t]}" || { echo "❌ Nie udało się pobrać $t (sprawdź internet)"; exit 1; }
+      if [[ $t == helm ]]; then
+        # helm jest w .zip — rozpakowuje go tar.exe wbudowany w Windows 10/11
+        curl -fsSLo "$bin/helm.zip" "${url[$t]}" \
+          && "$(cygpath -u "${SYSTEMROOT:-C:/Windows}")/System32/tar.exe" -xf "$bin/helm.zip" -C "$bin" windows-amd64/helm.exe \
+          && mv "$HOME/bin/windows-amd64/helm.exe" "$HOME/bin/helm.exe" \
+          && rm -rf "$HOME/bin/helm.zip" "$HOME/bin/windows-amd64" \
+          || { echo "❌ Nie udało się pobrać helm (sprawdź internet)"; exit 1; }
+      else
+        curl -fsSLo "$bin/$t.exe" "${url[$t]}" || { echo "❌ Nie udało się pobrać $t (sprawdź internet)"; exit 1; }
+      fi
       grep -qs 'HOME/bin' "$HOME/.bashrc" || echo 'export PATH="$HOME/bin:$PATH"' >> "$HOME/.bashrc"
     done
     ;;
