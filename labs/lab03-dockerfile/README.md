@@ -1,7 +1,7 @@
 # Lab 03 — Własny obraz z Dockerfile
 
 **Cel:** zbudować trzy obrazy i zobaczyć, co wpływa na czas budowania i rozmiar obrazu.
-**Czas:** ok. 35 minut · katalog `labs/lab03-dockerfile/`
+Katalog `labs/lab03-dockerfile/`
 
 ## 1. Strona w nginx (`1-nginx/`)
 
@@ -41,7 +41,7 @@ docker run -d --name hello -p 3000:3000 -e GREETING=Dzień\ dobry hello-node:1.0
 curl localhost:3000
 ```
 
-**Sprawdź cache:** zmień tekst w `server.js` i zbuduj jeszcze raz. Krok `npm install` powinien mieć `CACHED`. Teraz zmień kolejność (najpierw `COPY . .`, potem `npm install`), zmień `server.js` i zbuduj. Co się dzieje z cache?
+**Sprawdź cache:** zmień tekst w `server.js` i zbuduj jeszcze raz. Krok `npm install` powinien mieć `CACHED`. Teraz zmień kolejność (najpierw `COPY . .`, potem `npm install`), zmień `server.js` i zbuduj. Co się dzieje z cache? Na koniec przywróć dobrą kolejność.
 
 **Sprawdź użytkownika:** w odpowiedzi `curl` powinno być `użytkownik: node`, a nie `root`.
 
@@ -53,7 +53,7 @@ docker build -f Dockerfile.jeden-etap -t hello-go:duzy .
 ```
 
 Napisz `Dockerfile` w dwóch etapach:
-- etap `build`: `golang:1.25`, `RUN CGO_ENABLED=0 go build -o /hello .`
+- etap `build`: `FROM golang:1.25 AS build`, `WORKDIR /src`, `COPY . .`, `RUN CGO_ENABLED=0 go build -o /hello .` (podejrzyj `Dockerfile.jeden-etap` — to prawie to samo)
 - etap końcowy: `FROM gcr.io/distroless/static-debian12`, `COPY --from=build /hello /hello`, `CMD ["/hello"]`
 
 ```bash
@@ -61,6 +61,8 @@ docker build -t hello-go:maly .
 docker image ls hello-go
 docker run --rm -p 8084:8080 hello-go:maly
 ```
+
+Kontener działa na pierwszym planie (bez `-d`), więc terminal jest zajęty. Otwórz http://localhost:8084 w przeglądarce, a potem wróć do terminala i zatrzymaj kontener **Ctrl+C**.
 
 **Sprawdź:** porównaj rozmiary. Duży obraz zawiera cały kompilator, którego w produkcji nikt nie potrzebuje.
 
@@ -83,3 +85,5 @@ docker history hello-node:1.0     # warstwy i ich rozmiary
 ```bash
 docker rm -f strona hello
 ```
+
+Rozwiązania: katalog [`rozwiazanie/`](rozwiazanie/) — zajrzyj dopiero, gdy spróbujesz sam.

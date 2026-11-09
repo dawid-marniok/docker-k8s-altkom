@@ -50,7 +50,7 @@ kubectl config set-context --current --namespace=szkolenie
 |---|---|---|
 | `Pending` | brak zasobów na węzłach, brak PVC | `describe` → Events |
 | `ImagePullBackOff` / `ErrImagePull` | literówka w obrazie lub tagu, prywatny rejestr | `describe` → Events |
-| `CrashLoopBackOff` | aplikacja startuje i pada | `logs --previous` |
+| `CrashLoopBackOff` | aplikacja startuje i pada | `logs`, a gdy puste — `logs --previous` |
 | `Running`, ale `0/1 READY` | nie przechodzi `readinessProbe` | `describe` → Events, `logs` |
 | `OOMKilled` | przekroczony limit pamięci | `describe` → Last State |
 

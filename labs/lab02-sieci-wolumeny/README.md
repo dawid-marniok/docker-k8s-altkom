@@ -1,7 +1,7 @@
 # Lab 02 — Sieci i dane
 
 **Cel:** połączyć kontenery po nazwie i wybrać właściwy sposób przechowywania danych.
-**Czas:** ok. 25 minut · uruchamiaj z katalogu `labs/lab02-sieci-wolumeny/`
+Uruchamiaj z katalogu `labs/lab02-sieci-wolumeny/`
 
 ## Kroki
 
@@ -12,7 +12,7 @@ docker run -d --name serwer nginx:1.29
 docker run --rm busybox:1.37 wget -qO- -T 3 http://serwer
 ```
 
-Nie działa: kontenery w domyślnej sieci `bridge` nie widzą się po nazwie.
+Nie działa (`wget: bad address 'serwer'`) — i tak ma być: kontenery w domyślnej sieci `bridge` nie widzą się po nazwie.
 
 ### 2. Własna sieć = DNS po nazwie
 
@@ -32,7 +32,7 @@ docker network create inna-net
 docker run --rm --network inna-net busybox:1.37 wget -qO- -T 3 http://serwer
 ```
 
-Brak odpowiedzi: kontenery z różnych sieci się nie widzą.
+Znowu `bad address 'serwer'` — i tak ma być: kontenery z różnych sieci się nie widzą.
 
 ### 4. Bind mount: plik z laptopa w kontenerze
 
@@ -58,6 +58,8 @@ docker exec pg psql -U postgres -c "SELECT * FROM notatki;"
 ```
 
 **Sprawdź:** dane są, choć kontener został usunięty i utworzony od nowa.
+
+Jeśli `psql` zwróci `the database system is starting up` albo `could not connect`, baza jeszcze startuje — odczekaj kilka sekund i powtórz polecenie.
 
 | Kiedy | Co |
 |---|---|
@@ -87,3 +89,5 @@ docker rm -f serwer strona pg
 docker network rm app-net inna-net
 docker volume rm pgdata
 ```
+
+Odpowiedzi i oczekiwane wyniki: [`rozwiazanie/README.md`](rozwiazanie/README.md).

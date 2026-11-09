@@ -1,7 +1,7 @@
 # Lab 06 — Pody i diagnostyka
 
 **Cel:** utworzyć pod z pliku YAML, dostać się do niego i zdiagnozować pody, które nie wstają.
-**Czas:** ok. 25 minut · katalog `labs/lab06-pod/`
+Katalog `labs/lab06-pod/`
 
 ## 1. Pod z pliku
 
@@ -28,7 +28,7 @@ kubectl get pods --show-labels
 kubectl get pods -l env=test
 ```
 
-Teraz zmień obraz na `nginx:1.28` i spróbuj `apply`. Część pól poda jest niezmienna albo zmiana restartuje kontener. Sprawdź `kubectl describe pod web` (kolumna RESTARTS, sekcja Events).
+Teraz zmień obraz na `nginx:1.28` i spróbuj `apply`. Część pól poda jest niezmienna albo zmiana restartuje kontener. Sprawdź `kubectl get pods` (kolumna RESTARTS) i `kubectl describe pod web` (pola `Image`, `Restart Count` i sekcja Events).
 
 ## 3. Wejście do środka
 
@@ -55,7 +55,7 @@ Dla każdego poda ustal, **co** się dzieje i **dlaczego**. Używaj:
 | `kubectl get pods` | status: `ImagePullBackOff`, `CrashLoopBackOff`, `Pending`… |
 | `kubectl describe pod <nazwa>` | sekcja **Events** na dole |
 | `kubectl logs <nazwa>` | co wypisała aplikacja |
-| `kubectl logs <nazwa> --previous` | logi poprzedniego, padniętego uruchomienia |
+| `kubectl logs <nazwa> --previous` | logi poprzedniego, padniętego uruchomienia (gdy samo `logs` jest puste; nie zawsze jest dostępne) |
 
 Zapisz przyczyny na czacie. Napraw `zepsuty-1` w pliku i zastosuj ponownie (dla poda zwykle trzeba `kubectl delete` + `apply`).
 
@@ -82,3 +82,5 @@ kubectl logs para -c <nazwa-kontenera-busybox>
 kubectl delete -f pod.yaml -f zepsute.yaml --now
 kubectl delete pod para --now --ignore-not-found
 ```
+
+Odpowiedzi i rozwiązania: [`rozwiazanie/README.md`](rozwiazanie/README.md) — zajrzyj po samodzielnej próbie.

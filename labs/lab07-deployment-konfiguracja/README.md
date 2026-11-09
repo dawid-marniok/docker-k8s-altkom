@@ -1,7 +1,7 @@
 # Lab 07 — Deployment, aktualizacja i konfiguracja
 
 **Cel:** wdrożyć aplikację Deploymentem, zaktualizować ją bez przerwy, cofnąć zmianę i przekazać konfigurację z zewnątrz.
-**Czas:** ok. 35 minut · katalog `labs/lab07-deployment-konfiguracja/`
+Katalog `labs/lab07-deployment-konfiguracja/`
 
 ## 1. Deployment i samonaprawianie
 
@@ -53,12 +53,14 @@ kubectl rollout status deploy/hello --timeout=30s
 kubectl get pods
 ```
 
-Nowe pody nie wstają, ale **stare dalej działają** — rolling update nie wyłączył ich, bo nowe nie były gotowe.
+`rollout status` po 30 s kończy się błędem `timed out waiting for the condition` — tak ma być. Nowe pody nie wstają (`ErrImagePull` / `ImagePullBackOff`), ale **stare dalej działają** — rolling update nie wyłączył ich, bo nowe nie były gotowe.
 
 ```bash
 kubectl rollout undo deploy/hello
 kubectl rollout status deploy/hello
 ```
+
+Ostrzeżenie `resource deployments/hello was previously managed with 'kubectl apply'` jest niegroźne: przypomina, że plik `deployment.yaml` nie wie o cofnięciu. Przy następnym `apply` wygra zawartość pliku (w nim jest wciąż obraz `0.3-plain-text`).
 
 ## 5. ConfigMap jako zmienne środowiskowe
 
@@ -87,12 +89,26 @@ Zmień wartość w ConfigMap (`kubectl edit configmap hello-config`) i sprawdź 
 ```bash
 kubectl create secret generic hello-secret --from-literal=DB_PASSWORD=changeme-lab07
 kubectl get secret hello-secret -o yaml
-echo '<wartość z pola data>' | base64 -d
+echo '<wartość z pola data>' | base64 -d     # albo od razu:
+kubectl get secret hello-secret -o jsonpath='{.data.DB_PASSWORD}' | base64 -d; echo
 ```
 
 **Wniosek:** Secret to **nie** szyfrowanie, tylko base64. Ochronę daje RBAC (kto może czytać Secrety) i szyfrowanie etcd po stronie klastra.
 
-Dodaj Secret do Deploymentu tak samo jak ConfigMap (`secretRef`) i sprawdź `env`.
+Dodaj Secret do Deploymentu tak samo jak ConfigMap — druga pozycja w `envFrom`:
+
+```yaml
+          envFrom:
+            - configMapRef:
+                name: hello-config
+            - secretRef:
+                name: hello-secret
+```
+
+```bash
+kubectl apply -f deployment.yaml
+kubectl exec deploy/hello -- env | grep -E 'KOLOR|TRYB|DB_PASSWORD'
+```
 
 ## Dla chętnych
 
@@ -102,10 +118,8 @@ Dodaj Secret do Deploymentu tak samo jak ConfigMap (`secretRef`) i sprawdź `env
 
 ## Sprzątanie
 
-Deployment `hello` zostaw — przyda się w lab08.
+Nic nie usuwaj: Deployment `hello` (razem z ConfigMap i Secretem, z których korzysta) przyda się w lab08 i tam go posprzątamy.
 
-```bash
-kubectl delete configmap hello-config; kubectl delete secret hello-secret
-```
+> Gdybyś usunął ConfigMap albo Secret, a Deployment dalej się do nich odwołuje, nowe pody utkną w `CreateContainerConfigError`. Najpierw usuń `envFrom` z `deployment.yaml` i zrób `apply`.
 
-Jeśli usuwasz ConfigMap i Secret, usuń też `envFrom` z `deployment.yaml` i zrób `apply`.
+Rozwiązanie (Deployment po kroku 6): [`rozwiazanie/deployment.yaml`](rozwiazanie/deployment.yaml).

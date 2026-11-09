@@ -1,0 +1,35 @@
+# Rozwiązanie lab04 — pełny ToDos w Compose
+# Uruchom z katalogu labs/lab04-compose-todos/:  docker compose -f rozwiazanie/compose.yaml up -d --build
+name: todos
+
+services:
+  mongo:
+    image: mongo:7.0
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ../../../app/todos/api
+    image: todos-api:1.0
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      APP_VERSION: "1.0"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  web:
+    build: ../../../app/todos/web
+    image: todos-web:1.0
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
+
+volumes:
+  mongo-data:

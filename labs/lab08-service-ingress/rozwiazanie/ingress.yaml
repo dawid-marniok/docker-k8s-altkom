@@ -1,0 +1,24 @@
+# Lab08 krok 6: dwie aplikacje pod jednym hostem
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello
+spec:
+  rules:
+    - host: hello.localhost
+      http:
+        paths:
+          - path: /echo
+            pathType: Prefix
+            backend:
+              service:
+                name: echo
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hello
+                port:
+                  number: 80

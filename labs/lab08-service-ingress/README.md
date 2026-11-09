@@ -1,7 +1,7 @@
 # Lab 08 — Service i Ingress
 
 **Cel:** dać aplikacji stały adres w klastrze, a potem adres z przeglądarki.
-**Czas:** ok. 30 minut · katalog `labs/lab08-service-ingress/` · potrzebny Deployment `hello` z lab07
+Katalog `labs/lab08-service-ingress/` · potrzebny Deployment `hello` z lab07
 
 ```bash
 kubectl get deploy hello     # jeśli go nie ma: kubectl apply -f ../lab07-deployment-konfiguracja/deployment.yaml
@@ -37,6 +37,7 @@ kubectl get endpointslices -l kubernetes.io/service-name=hello
 
 ```bash
 kubectl run klient --rm -it --image=busybox:1.37 -- sh
+# zobaczysz „If you don't see a command prompt, try pressing enter” — naciśnij Enter
 # w środku, kilka razy:
 wget -qO- http://hello | grep 'Server name'
 wget -qO- http://hello.szkolenie.svc.cluster.local | grep 'Server name'
@@ -62,6 +63,8 @@ kubectl expose deploy hello --name=hello-np --type=NodePort --port=80
 kubectl get svc hello-np        # zapamiętaj port 3xxxx
 docker exec szkolenie-worker curl -s localhost:<port> | head -3
 ```
+
+Pusta odpowiedź zaraz po `expose`? Klaster potrzebuje kilku sekund na ustawienie reguł — powtórz polecenie.
 
 Na kind węzły to kontenery, więc NodePort sprawdzamy „z węzła”. W prawdziwym klastrze to port otwarty na każdym węźle.
 
@@ -107,9 +110,16 @@ kubectl create deployment echo --image=hashicorp/http-echo:1.0 -- /http-echo -te
 kubectl expose deployment echo --port=80 --target-port=5678
 ```
 
-Dodaj do Ingressu drugą ścieżkę `/echo` prowadzącą do Service `echo`.
+Dodaj do Ingressu drugą ścieżkę `/echo` prowadzącą do Service `echo` i zrób `kubectl apply -f ingress.yaml`.
+
+<details><summary>Podpowiedź</summary>
+
+W tej samej regule `host: hello.localhost`, pod `paths:`, dopisz drugi element listy — skopiuj blok `- path: / …` i zmień `path` na `/echo`, a `service.name` na `echo`. Kolejność nie ma znaczenia: wygrywa najdłuższy pasujący prefiks.
+</details>
 
 **Sprawdź:** `curl http://hello.localhost/echo` i `curl http://hello.localhost/`.
+
+`no available server`? Traefik potrzebuje kilku sekund, żeby zauważyć nowe pody — powtórz `curl`.
 
 ## Dla chętnych
 
@@ -123,4 +133,8 @@ Dodaj do Ingressu drugą ścieżkę `/echo` prowadzącą do Service `echo`.
 kubectl delete ingress hello
 kubectl delete svc hello hello-np echo
 kubectl delete deploy hello echo
+kubectl delete configmap hello-config --ignore-not-found
+kubectl delete secret hello-secret --ignore-not-found
 ```
+
+Rozwiązanie (Ingress po kroku 6): [`rozwiazanie/ingress.yaml`](rozwiazanie/ingress.yaml).

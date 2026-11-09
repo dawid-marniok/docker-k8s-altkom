@@ -1,0 +1,53 @@
+# Baza danych — gotowa, nic tu nie musisz zmieniać.
+# PersistentVolumeClaim prosi klaster o 1 GiB dysku; dane przeżyją usunięcie poda.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-data
+  labels: { app: mongo, part-of: todos }
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  labels: { app: mongo, part-of: todos }
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate          # jeden dysk RWO = nie może być dwóch podów bazy naraz
+  selector:
+    matchLabels: { app: mongo }
+  template:
+    metadata:
+      labels: { app: mongo, part-of: todos }
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:7.0
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits:   { cpu: 500m, memory: 512Mi }
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mongo-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  labels: { app: mongo, part-of: todos }
+spec:
+  selector: { app: mongo }
+  ports:
+    - port: 27017

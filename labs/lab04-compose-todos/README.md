@@ -1,7 +1,7 @@
 # Lab 04 — ToDos w Docker Compose
 
 **Cel:** uruchomić aplikację z trzech kontenerów jednym poleceniem.
-**Czas:** ok. 40 minut · katalog `labs/lab04-compose-todos/`
+Katalog `labs/lab04-compose-todos/`
 
 Aplikacja ToDos (kod w `app/todos/`) to trzy części:
 
@@ -82,7 +82,13 @@ docker compose up -d --scale api=3
 docker compose ps
 ```
 
-Odśwież stronę kilka razy i obserwuj nazwę hosta na górze. `web` trafia do `api` po nazwie, a DNS Dockera rozkłada ruch między kontenery.
+Odśwież stronę kilka razy i obserwuj nazwę hosta na górze. Wciąż ten sam? To nie błąd: nginx w `web` sprawdza adres `api` w DNS tylko raz, przy starcie, i zapamiętał wtedy jeden kontener. Uruchom go ponownie:
+
+```bash
+docker compose restart web
+```
+
+Teraz odśwież stronę kilka razy — nazwa hosta się zmienia. DNS Dockera zwraca pod nazwą `api` adresy wszystkich trzech kontenerów, a nginx rozkłada między nie ruch. (W Kubernetesie tego problemu nie będzie: Service ma jeden stały adres.)
 
 > Dlaczego da się skalować `api`, a `web` już nie? Spójrz na `ports:`.
 
@@ -106,3 +112,5 @@ docker volume ls | grep todos
 ```bash
 docker compose down        # obrazy todos-api:1.0 i todos-web:1.0 zostają — przydadzą się jutro
 ```
+
+Rozwiązanie: [`rozwiazanie/compose.yaml`](rozwiazanie/compose.yaml). Uruchomisz je z tego katalogu: `docker compose -f rozwiazanie/compose.yaml up -d --build`.

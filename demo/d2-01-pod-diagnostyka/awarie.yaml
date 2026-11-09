@@ -1,0 +1,41 @@
+# Trzy typowe awarie poda — każdą diagnozujemy przez get → describe → logs.
+# 1) OOMKilled: proces zjada więcej pamięci niż limit
+apiVersion: v1
+kind: Pod
+metadata:
+  name: awaria-pamiec
+spec:
+  containers:
+    - name: app
+      image: busybox:1.37
+      command: ["sh", "-c", "echo zaczynam jesc pamiec; tail /dev/zero"]
+      resources:
+        limits:
+          memory: 32Mi
+---
+# 2) Pending: żaden węzeł nie ma etykiety dysk=ssd
+apiVersion: v1
+kind: Pod
+metadata:
+  name: awaria-wezel
+spec:
+  nodeSelector:
+    dysk: ssd
+  containers:
+    - name: app
+      image: httpd:2.4
+---
+# 3) Running, ale 0/1 READY: sonda gotowości pyta o adres, którego nie ma
+apiVersion: v1
+kind: Pod
+metadata:
+  name: awaria-sonda
+spec:
+  containers:
+    - name: app
+      image: httpd:2.4
+      readinessProbe:
+        httpGet:
+          path: /zdrowie
+          port: 80
+        periodSeconds: 3

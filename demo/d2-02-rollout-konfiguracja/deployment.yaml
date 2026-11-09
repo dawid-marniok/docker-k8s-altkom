@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+  labels:
+    app: whoami
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      labels:
+        app: whoami
+    spec:
+      containers:
+        - name: whoami
+          image: traefik/whoami:v1.10.4
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            periodSeconds: 2
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 32Mi
+          # Krok 4: odkomentuj te trzy linie i zrób apply
+          # envFrom:
+          #   - configMapRef:
+          #       name: whoami-config

@@ -1,0 +1,12 @@
+# Lab06 krok 5: dwa kontenery w jednym podzie — wspólny adres IP (localhost)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: para
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.29
+    - name: sonda
+      image: busybox:1.37
+      command: ["sh", "-c", "while true; do wget -qO- localhost:80 | head -1; sleep 5; done"]

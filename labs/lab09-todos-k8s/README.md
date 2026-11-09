@@ -1,7 +1,7 @@
 # Lab 09 — Ćwiczenie końcowe: ToDos na Kubernetesie
 
 **Cel:** przenieść ToDos z Docker Compose (lab04) na klaster i otworzyć go pod adresem http://todos.localhost.
-**Czas:** ok. 50 minut · katalog `labs/lab09-todos-k8s/`
+Katalog `labs/lab09-todos-k8s/`
 
 To ćwiczenie składa wszystko z dwóch dni: obraz, Deployment, Service, ConfigMap, Secret, sondy i Ingress.
 
@@ -38,6 +38,10 @@ kubectl apply -f 01-mongo.yaml
 kubectl get pvc,pods -l app=mongo
 ```
 
+PVC przez pierwsze sekundy ma status `Pending` — to normalne: dysk powstaje dopiero, gdy pod bazy trafi na węzeł. Po chwili: `Bound` i pod `Running`.
+
+> **Etykiety:** każdy obiekt w `01-mongo.yaml` ma `labels: { app: mongo, part-of: todos }`. Nadaj tak samo `part-of: todos` wszystkim obiektom, które napiszesz w krokach 2 i 3 (a `app: api` / `app: web` odpowiednio). Dzięki temu zadziała sprawdzanie `kubectl get all -l part-of=todos` i sprzątanie na końcu. `01-mongo.yaml` to też dobry wzór składni Deploymentu i Service.
+
 ## Krok 2. API — napisz `02-api.yaml`
 
 Wymagania:
@@ -48,6 +52,19 @@ Wymagania:
   - `livenessProbe`: `httpGet` na `/healthz`, port 3000
   - `resources`: requests `50m`/`64Mi`, limits `250m`/`128Mi`
 - **Service** `api` na porcie 3000 — **nazwa ma znaczenie**: `web` szuka API pod `http://api:3000`
+
+<details><summary>Podpowiedź: sondy i envFrom</summary>
+
+```yaml
+          envFrom:
+            - configMapRef: { name: api-config }
+            - secretRef:    { name: api-secret }
+          readinessProbe:
+            httpGet: { path: /readyz, port: 3000 }
+          livenessProbe:
+            httpGet: { path: /healthz, port: 3000 }
+```
+</details>
 
 ```bash
 kubectl apply -f 02-api.yaml
@@ -86,7 +103,7 @@ Otwórz http://todos.localhost i dodaj kilka zadań.
 
 1. **Nowa wersja bez przerwy:** zmień `APP_VERSION` w ConfigMap na `"1.1"`, zrób `kubectl rollout restart deploy/api` i obserwuj stronę.
 2. **Rollback:** ustaw w Deploymencie obraz `todos-api:2.0` (nie istnieje). Co się dzieje ze stroną? Cofnij `kubectl rollout undo deploy/api`.
-3. **Autoskalowanie:** `kubectl autoscale deploy api --min=2 --max=5 --cpu-percent=50`, potem `kubectl get hpa -w`.
+3. **Autoskalowanie:** `kubectl autoscale deploy api --min=2 --max=5 --cpu=50%`, potem `kubectl get hpa -w`.
 4. **Gdzie jest dysk?** `kubectl get pv`, `kubectl describe pvc mongo-data`.
 
 ## Gdy coś nie działa
@@ -99,9 +116,14 @@ Otwórz http://todos.localhost i dodaj kilka zadań.
 | strona działa, ale „Brak połączenia z API” | czy Service nazywa się dokładnie `api` i ma port 3000? `kubectl get endpointslices` |
 | `404 page not found` pod todos.localhost | `kubectl describe ingress todos` — host, nazwa Service, port |
 
+## Rozwiązanie
+
+Gotowe manifesty: [`rozwiazanie/`](rozwiazanie/). Zajrzyj, gdy utkniesz, albo porównaj po skończeniu. Całość wdrożysz jednym poleceniem z tego katalogu: `kubectl apply -f rozwiazanie/` (po kroku 0).
+
 ## Sprzątanie (dopiero po zakończeniu szkolenia)
 
 ```bash
 kubectl delete all,ingress,configmap,secret,pvc -l part-of=todos
+kubectl delete hpa api --ignore-not-found   # jeśli robiłeś autoskalowanie
 ./setup/start-klastra.sh --usun        # z głównego katalogu repo: usuwa cały klaster
 ```

@@ -22,7 +22,11 @@ Instalacja i sprawdzenie środowiska: **[setup/README.md](setup/README.md)**. Zr
 | 2 | Service i Ingress | [lab08](labs/lab08-service-ingress/) |
 | 2 | Ćwiczenie końcowe: ToDos na Kubernetesie | [lab09](labs/lab09-todos-k8s/) |
 
-Każdy lab ma część podstawową (dla wszystkich) i „Dla chętnych” (gdy skończysz wcześniej).
+Każdy lab ma część podstawową (dla wszystkich) i „Dla chętnych” (gdy skończysz wcześniej). W katalogu `rozwiazanie/` każdego labu są rozwiązania i odpowiedzi — zajrzyj, gdy utkniesz albo żeby porównać po skończeniu.
+
+## Dema
+
+Polecenia z dem pokazywanych przed labami: **[demo/README.md](demo/README.md)**. Możesz je powtórzyć u siebie.
 
 ## Ściągi
 
@@ -33,7 +37,8 @@ Każdy lab ma część podstawową (dla wszystkich) i „Dla chętnych” (gdy s
 
 ```
 app/todos/     aplikacja ToDos: api (Node.js) + web (nginx) — do lab04 i lab09
-labs/          ćwiczenia, po jednym katalogu na lab
+labs/          ćwiczenia, po jednym katalogu na lab (w każdym rozwiazanie/)
+demo/          dema ze szkolenia: pliki i polecenia
 setup/         instalacja narzędzi i lokalny klaster kind
 sciagi/        polecenia pod ręką
 ```

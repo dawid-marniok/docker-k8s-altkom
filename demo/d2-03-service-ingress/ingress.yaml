@@ -1,0 +1,17 @@
+# Adres dla przeglądarki: kto.localhost → Service kto, port 80.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kto
+spec:
+  rules:
+    - host: kto.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kto
+                port:
+                  number: 80

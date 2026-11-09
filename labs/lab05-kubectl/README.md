@@ -1,7 +1,7 @@
 # Lab 05 — Twój klaster i kubectl
 
 **Cel:** postawić lokalny klaster i rozejrzeć się w nim przez `kubectl`.
-**Czas:** ok. 25 minut · z głównego katalogu repo
+Z głównego katalogu repo
 
 ## 1. Klaster
 
@@ -43,6 +43,8 @@ kubectl get pods -A                   # wszystko we wszystkich namespace'ach
 kubectl top nodes                     # CPU i pamięć węzłów (metrics-server)
 ```
 
+`error: metrics not available yet`? metrics-server zbiera dane co ok. minutę — poczekaj chwilę i powtórz.
+
 ## 4. kubectl jako dokumentacja
 
 ```bash
@@ -65,7 +67,7 @@ Na jakim węźle wylądował pod? (`kubectl get pod ping -o wide`)
 ## 6. Ten sam obiekt jako YAML
 
 ```bash
-kubectl get pod ping -o yaml | less
+kubectl get pod ping -o yaml | less   # przewijanie strzałkami, wyjście: q
 kubectl run ping2 --image=busybox:1.37 --dry-run=client -o yaml -- sleep 3600
 ```
 
@@ -84,3 +86,5 @@ kubectl delete pod ping --now
 ```
 
 Klaster zostaw — jutro pracujemy na nim cały dzień.
+
+Odpowiedzi i oczekiwane wyniki: [`rozwiazanie/README.md`](rozwiazanie/README.md).

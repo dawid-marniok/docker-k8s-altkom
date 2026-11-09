@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  labels: { app: api, part-of: todos }
+data:
+  APP_VERSION: "1.0"
+  DB_NAME: todos
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-secret
+  labels: { app: api, part-of: todos }
+type: Opaque
+stringData:
+  MONGO_URL: mongodb://mongo:27017
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  labels: { app: api, part-of: todos }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: api }
+  template:
+    metadata:
+      labels: { app: api, part-of: todos }
+    spec:
+      containers:
+        - name: api
+          image: todos-api:1.0
+          imagePullPolicy: IfNotPresent   # obraz wgrany przez kind load, nie z rejestru
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef: { name: api-config }
+            - secretRef:    { name: api-secret }
+          readinessProbe:
+            httpGet: { path: /readyz, port: 3000 }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: 3000 }
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits:   { cpu: 250m, memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api               # nazwa = adres w DNS klastra; web domyślnie szuka http://api:3000
+  labels: { app: api, part-of: todos }
+spec:
+  selector: { app: api }
+  ports:
+    - port: 3000

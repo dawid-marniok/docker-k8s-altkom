@@ -1,0 +1,11 @@
+# Lab08 krok 1: Service ClusterIP dla Deploymentu hello
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello
+spec:
+  selector:
+    app: hello        # musi pasować do etykiet podów z Deploymentu
+  ports:
+    - port: 80        # port Service
+      targetPort: 80  # port kontenera
