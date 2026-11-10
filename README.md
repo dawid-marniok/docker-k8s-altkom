@@ -28,10 +28,13 @@ Każdy lab ma część podstawową (dla wszystkich) i „Dla chętnych” (gdy s
 
 Polecenia z dem pokazywanych przed labami: **[demo/README.md](demo/README.md)**. Możesz je powtórzyć u siebie.
 
-## Ściągi
+## Dokumentacja
 
-- [sciagi/docker.md](sciagi/docker.md) — najważniejsze polecenia Dockera i Compose
-- [sciagi/kubectl.md](sciagi/kubectl.md) — kubectl na co dzień i diagnostyka podów
+Ściągi z poleceniami i diagramy, które pokazują, jak to działa: **[docs/README.md](docs/README.md)**.
+
+- [docs/docker.md](docs/docker.md) — najważniejsze polecenia Dockera i Compose
+- [docs/kubectl.md](docs/kubectl.md) — kubectl na co dzień i diagnostyka podów
+- `docs/*.html` — diagramy do otwarcia w przeglądarce (opis w [docs/README.md](docs/README.md))
 
 ## Struktura
 
@@ -40,7 +43,7 @@ app/todos/     aplikacja ToDos: api (Node.js) + web (nginx) — do lab04 i lab09
 labs/          ćwiczenia, po jednym katalogu na lab (w każdym rozwiazanie/)
 demo/          dema ze szkolenia: pliki i polecenia
 setup/         instalacja narzędzi i lokalny klaster kind
-sciagi/        polecenia pod ręką
+docs/          ściągi z poleceniami i diagramy (HTML)
 ```
 
 ## Po szkoleniu

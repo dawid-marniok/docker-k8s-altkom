@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cert-manager</title>
+<style>
+/* Wspólny styl stron w docs/. Działa offline, bez zewnętrznych czcionek i bibliotek. */
+:root {
+  --bg: #f6f6f3;
+  --surface: #ffffff;
+  --surface-2: #f0f0ec;
+  --text: #1c1c1e;
+  --muted: #5d6066;
+  --border: #d9d9d3;
+  --accent: #2f64d6;
+  --accent-soft: #e3ebfb;
+  --docker: #1d63ed;
+  --ok: #1d7a3a;
+  --ok-soft: #dff1e4;
+  --warn: #a75a00;
+  --warn-soft: #fbecd7;
+  --err: #b42318;
+  --err-soft: #fbe2df;
+  --code-bg: #f1f1ed;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.04);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141517;
+    --surface: #1c1d20;
+    --surface-2: #24262a;
+    --text: #e9e9ea;
+    --muted: #a0a3a9;
+    --border: #34363b;
+    --accent: #7ea6ff;
+    --accent-soft: #1f2b45;
+    --docker: #6f9dff;
+    --ok: #5cc27b;
+    --ok-soft: #173222;
+    --warn: #f0a94b;
+    --warn-soft: #3a2a14;
+    --err: #ff8a7d;
+    --err-soft: #3d1c19;
+    --code-bg: #24262a;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #141517;
+  --surface: #1c1d20;
+  --surface-2: #24262a;
+  --text: #e9e9ea;
+  --muted: #a0a3a9;
+  --border: #34363b;
+  --accent: #7ea6ff;
+  --accent-soft: #1f2b45;
+  --docker: #6f9dff;
+  --ok: #5cc27b;
+  --ok-soft: #173222;
+  --warn: #f0a94b;
+  --warn-soft: #3a2a14;
+  --err: #ff8a7d;
+  --err-soft: #3d1c19;
+  --code-bg: #24262a;
+  --shadow: none;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 16px 80px;
+}
+
+.crumbs {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.crumbs a {
+  color: var(--muted);
+}
+
+h1 {
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 720px;
+  margin: 0 0 40px;
+}
+
+h2 {
+  font-size: 24px;
+  margin: 56px 0 8px;
+  letter-spacing: -0.01em;
+}
+
+h2 + p {
+  margin-top: 0;
+  color: var(--muted);
+  max-width: 720px;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 0 0 6px;
+}
+
+a {
+  color: var(--accent);
+}
+
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+code {
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+  gap: 16px;
+}
+
+.note {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 16px 0;
+}
+
+.note.warn {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.note.ok {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.note.err {
+  border-color: var(--err);
+  background: var(--err-soft);
+}
+
+/* diagramy */
+.diagram {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.diagram text {
+  fill: var(--text);
+  font-family: inherit;
+}
+
+.diagram .muted {
+  fill: var(--muted);
+}
+
+.diagram .box {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.diagram .zone {
+  fill: var(--surface-2);
+  stroke: var(--border);
+  stroke-dasharray: 5 4;
+}
+
+.diagram .line {
+  stroke: var(--muted);
+  stroke-width: 1.6;
+  fill: none;
+}
+
+.diagram .arrowhead {
+  fill: var(--muted);
+}
+
+.diagram .step {
+  transition: opacity 0.25s;
+}
+
+.diagram.stepping .step {
+  opacity: 0.28;
+}
+
+.diagram.stepping .step.on {
+  opacity: 1;
+}
+
+.diagram.stepping .step.on .box {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  fill: var(--accent-soft);
+}
+
+.diagram.stepping .step.on .line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.diagram.stepping .step.on .arrowhead {
+  fill: var(--accent);
+}
+
+.diagram.stepping .step.done {
+  opacity: 0.75;
+}
+
+/* sterowanie krokami */
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+button {
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+}
+
+button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.counter {
+  color: var(--muted);
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.explain {
+  margin-top: 12px;
+  min-height: 96px;
+}
+
+.explain h3 {
+  color: var(--accent);
+}
+
+.explain p {
+  margin: 4px 0;
+}
+
+/* tabele */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.tag.ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.tag.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.tag.err {
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+footer {
+  margin-top: 64px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* szerokie diagramy przewijają się w ramce, a nie całą stroną */
+.scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll > svg {
+  min-width: 760px;
+}
+
+/* chipy podów w animacji rolling update */
+.rs-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.rs-label {
+  width: 210px;
+  flex: none;
+  font-size: 14px;
+}
+
+.rs-label code {
+  font-size: 13px;
+}
+
+.pods {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 40px;
+}
+
+.pod {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  min-width: 92px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.pod.ready {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.pod.starting {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-style: dashed;
+}
+
+.pod.failing {
+  border-color: var(--err);
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+.pod.terminating {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.meter {
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+/* tekst w diagramach */
+.diagram .t {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.diagram .s {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .lbl {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .dashed {
+  stroke-dasharray: 5 4;
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="crumbs"><a href="README.md">docs</a> / cert-manager</div>
+  <h1>cert-manager: HTTPS w Kubernetesie bez ręcznych certyfikatów</h1>
+  <p class="lead">Materiał poglądowy, bez laba. cert-manager to dodatek do klastra, który sam zamawia certyfikaty TLS (np. z Let's Encrypt), zapisuje je w Secret i odnawia przed wygaśnięciem. Ty dopisujesz do Ingressa jedną adnotację i sekcję <code>tls</code>.</p>
+
+  <div class="note warn">
+    <strong>Na szkoleniu go nie instalujemy.</strong> Let's Encrypt musi połączyć się z Twoją domeną z internetu, a klaster kind z adresami <code>*.localhost</code> jest dostępny tylko z laptopa. Lokalnie używa się wystawcy <code>SelfSigned</code> albo własnego CA.
+  </div>
+
+  <h2>Problem, który rozwiązuje</h2>
+  <p>Bez cert-managera certyfikat trzeba kupić albo wygenerować, wgrać do Secret i pamiętać o wymianie. Certyfikaty Let's Encrypt są ważne 90 dni.</p>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Ręcznie</h3>
+      <p style="margin:0">Generujesz klucz i certyfikat, robisz <code>kubectl create secret tls</code>, wpisujesz Secret do Ingressa. Za kilka miesięcy certyfikat wygasa, a przeglądarki pokazują ostrzeżenie.</p>
+    </div>
+    <div class="card">
+      <h3>Z cert-managerem</h3>
+      <p style="margin:0">Opisujesz, <strong>skąd</strong> brać certyfikaty (Issuer) i <strong>dla jakiej domeny</strong> (Ingress albo Certificate). Zamówienie, zapis do Secret i odnawianie dzieją się same.</p>
+    </div>
+  </div>
+
+  <!-- DIAGRAM -->
+  <h2>Jak to działa krok po kroku</h2>
+  <p>Przykład: ToDos pod adresem <code>todos.example.com</code>, certyfikat z Let's Encrypt, weryfikacja HTTP-01.</p>
+
+  <div class="card" data-kroki tabindex="0">
+    <div class="scroll">
+      <svg class="diagram" viewBox="0 0 1000 460" role="img" aria-label="cert-manager: Ingress, Certificate, CertificateRequest, Order, Challenge, pod solvera, Let's Encrypt, Secret, Traefik, przeglądarka">
+        <rect class="zone" x="10" y="20" width="170" height="430" rx="12"/>
+        <text class="lbl" x="24" y="44">Internet</text>
+        <rect class="zone" x="200" y="20" width="790" height="430" rx="12"/>
+        <text class="lbl" x="214" y="44">Klaster</text>
+
+        <g class="step" data-step="1">
+          <rect class="box" x="220" y="60" width="160" height="60" rx="8"/>
+          <text class="t" x="300" y="85" text-anchor="middle">Ingress todos</text>
+          <text class="s" x="300" y="104" text-anchor="middle">adnotacja + tls</text>
+        </g>
+
+        <g class="step" data-step="2 9">
+          <path class="line" d="M380 90 H411"/>
+          <polygon class="arrowhead" points="420,90 411,85 411,95"/>
+          <rect class="box" x="420" y="60" width="160" height="60" rx="8"/>
+          <text class="t" x="500" y="85" text-anchor="middle">Certificate</text>
+          <text class="s" x="500" y="104" text-anchor="middle">todos-tls</text>
+        </g>
+
+        <g class="step" data-step="3">
+          <path class="line" d="M580 90 H611"/>
+          <polygon class="arrowhead" points="620,90 611,85 611,95"/>
+          <rect class="box" x="620" y="60" width="170" height="60" rx="8"/>
+          <text class="t" x="705" y="85" text-anchor="middle">CertificateRequest</text>
+          <text class="s" x="705" y="104" text-anchor="middle">klucz + CSR</text>
+        </g>
+
+        <g class="step" data-step="4">
+          <path class="line" d="M790 90 H811"/>
+          <polygon class="arrowhead" points="820,90 811,85 811,95"/>
+          <rect class="box" x="820" y="60" width="155" height="60" rx="8"/>
+          <text class="t" x="897.5" y="85" text-anchor="middle">Order</text>
+          <text class="s" x="897.5" y="104" text-anchor="middle">zamówienie ACME</text>
+          <path class="line" d="M850 120 V155 H95 V191"/>
+          <polygon class="arrowhead" points="95,200 90,191 100,191"/>
+          <text class="lbl" x="700" y="147" text-anchor="middle">ACME API: „chcę certyfikat dla todos.example.com”</text>
+        </g>
+
+        <g class="step" data-step="4 6 7">
+          <rect class="box" x="25" y="200" width="140" height="60" rx="8"/>
+          <text class="t" x="95" y="225" text-anchor="middle">Let's Encrypt</text>
+          <text class="s" x="95" y="244" text-anchor="middle">urząd certyfikacji</text>
+        </g>
+
+        <g class="step" data-step="5">
+          <path class="line" d="M940 120 V191"/>
+          <polygon class="arrowhead" points="940,200 935,191 945,191"/>
+          <rect class="box" x="820" y="200" width="155" height="60" rx="8"/>
+          <text class="t" x="897.5" y="225" text-anchor="middle">Challenge</text>
+          <text class="s" x="897.5" y="244" text-anchor="middle">HTTP-01</text>
+          <path class="line" d="M820 230 H799"/>
+          <polygon class="arrowhead" points="790,230 799,225 799,235"/>
+          <rect class="box dashed" x="620" y="200" width="170" height="60" rx="8"/>
+          <text class="t" x="705" y="225" text-anchor="middle">pod solvera</text>
+          <text class="s" x="705" y="244" text-anchor="middle">odpowiada tokenem</text>
+        </g>
+
+        <g class="step" data-step="6">
+          <path class="line" d="M165 230 H611"/>
+          <polygon class="arrowhead" points="620,230 611,225 611,235"/>
+          <text class="lbl" x="392" y="220" text-anchor="middle">GET /.well-known/acme-challenge/&lt;token&gt;</text>
+        </g>
+
+        <g class="step" data-step="7">
+          <path class="line" d="M95 260 V370 H411"/>
+          <polygon class="arrowhead" points="420,370 411,365 411,375"/>
+          <text class="lbl" x="260" y="360" text-anchor="middle">podpisany certyfikat</text>
+          <rect class="box" x="420" y="340" width="160" height="60" rx="8"/>
+          <text class="t" x="500" y="365" text-anchor="middle">Secret todos-tls</text>
+          <text class="s" x="500" y="384" text-anchor="middle">tls.crt + tls.key</text>
+        </g>
+
+        <g class="step" data-step="8">
+          <path class="line dashed" d="M580 370 H611"/>
+          <polygon class="arrowhead" points="620,370 611,365 611,375"/>
+          <rect class="box" x="620" y="340" width="170" height="60" rx="8"/>
+          <text class="t" x="705" y="365" text-anchor="middle">Traefik</text>
+          <text class="s" x="705" y="384" text-anchor="middle">Ingress Controller</text>
+          <rect class="box" x="25" y="380" width="140" height="56" rx="8"/>
+          <text class="t" x="95" y="404" text-anchor="middle">Przeglądarka</text>
+          <text class="s" x="95" y="422" text-anchor="middle">🔒 https://</text>
+          <path class="line" d="M165 425 H705 V409"/>
+          <polygon class="arrowhead" points="705,400 700,409 710,409"/>
+          <text class="lbl" x="300" y="417" text-anchor="middle">HTTPS :443</text>
+        </g>
+
+        <g class="step" data-step="9">
+          <path class="line dashed" d="M540 340 V129"/>
+          <polygon class="arrowhead" points="540,120 535,129 545,129"/>
+          <text class="lbl" x="550" y="300">odnowienie przed</text>
+          <text class="lbl" x="550" y="316">wygaśnięciem</text>
+        </g>
+      </svg>
+    </div>
+    <div class="stepper">
+      <button data-prev>◀ Wstecz</button>
+      <button class="primary" data-next>Start ▶</button>
+      <button data-all>Całość</button>
+      <span class="counter"></span>
+    </div>
+    <div class="explain">
+      <p>Górny rząd to obiekty, które cert-manager tworzy po kolei. Środek to weryfikacja, czy domena jest naprawdę Twoja. Dół to gotowy certyfikat w użyciu. Kliknij <strong>Start</strong>.</p>
+    </div>
+    <div hidden data-opisy>
+      <section data-title="Ingress z adnotacją">
+        <p>Do zwykłego Ingressa dopisujesz adnotację <code>cert-manager.io/cluster-issuer: letsencrypt</code> i sekcję <code>tls</code> z domeną i nazwą Secret. To jedyna zmiana po Twojej stronie.</p>
+      </section>
+      <section data-title="Certificate">
+        <p>cert-manager widzi adnotację i tworzy obiekt <strong>Certificate</strong>: „dla <code>todos.example.com</code> chcę certyfikat w Secret <code>todos-tls</code>, wystawia ClusterIssuer <code>letsencrypt</code>”. Certificate możesz też napisać ręcznie, bez Ingressa.</p>
+      </section>
+      <section data-title="CertificateRequest">
+        <p>cert-manager generuje klucz prywatny i <strong>CSR</strong>, czyli prośbę o podpisanie certyfikatu. Klucz nigdy nie opuszcza klastra, do urzędu idzie tylko CSR.</p>
+      </section>
+      <section data-title="Order: zamówienie w Let's Encrypt">
+        <p>Let's Encrypt działa protokołem <strong>ACME</strong>. cert-manager składa zamówienie, a Let's Encrypt odpowiada: „udowodnij, że kontrolujesz tę domenę”.</p>
+      </section>
+      <section data-title="Challenge i pod solvera">
+        <p>Dla weryfikacji <strong>HTTP-01</strong> cert-manager tworzy tymczasowy pod, Service i Ingress. Pod pod adresem <code>/.well-known/acme-challenge/&lt;token&gt;</code> zwraca token od Let's Encrypt.</p>
+      </section>
+      <section data-title="Let's Encrypt sprawdza domenę">
+        <p>Serwery Let's Encrypt łączą się z <code>http://todos.example.com</code> <strong>z internetu</strong>, na porcie 80. Jeśli dostaną właściwy token, domena jest potwierdzona. Dlatego DNS musi wskazywać na klaster, a port 80 musi być otwarty. Właśnie to nie zadziała na lokalnym kind.</p>
+      </section>
+      <section data-title="Certyfikat trafia do Secret">
+        <p>Let's Encrypt podpisuje certyfikat. cert-manager zapisuje go razem z kluczem w Secret typu <code>kubernetes.io/tls</code> i sprząta tymczasowy pod solvera. Certificate dostaje <code>READY: True</code>.</p>
+      </section>
+      <section data-title="Traefik serwuje HTTPS">
+        <p>Ingress Controller czyta Secret wskazany w <code>tls.secretName</code> i obsługuje HTTPS na porcie 443. Przeglądarka widzi zaufany certyfikat i kłódkę. Aplikacja w podzie dalej mówi zwykłym HTTP i nic o TLS nie wie.</p>
+      </section>
+      <section data-title="Odnawianie">
+        <p>Certyfikat Let's Encrypt jest ważny 90 dni. Domyślnie cert-manager odnawia go po upływie 2/3 ważności, czyli na około 30 dni przed końcem. Cały proces od kroku 3 powtarza się sam i nadpisuje Secret.</p>
+      </section>
+    </div>
+  </div>
+
+  <h2>Konfiguracja: dwa pliki</h2>
+  <p>ClusterIssuer zakładasz raz na klaster, a adnotację dopisujesz do każdego Ingressa, który ma mieć HTTPS.</p>
+  <div class="grid-2">
+    <div>
+      <h3>ClusterIssuer: skąd brać certyfikaty</h3>
+<pre><code>apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@example.com
+    privateKeySecretRef:
+      name: letsencrypt-konto
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: traefik</code></pre>
+    </div>
+    <div>
+      <h3>Ingress: dla jakiej domeny</h3>
+<pre><code>apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: todos
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  tls:
+    - hosts:
+        - todos.example.com
+      secretName: todos-tls
+  rules:
+    - host: todos.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 80</code></pre>
+    </div>
+  </div>
+  <p style="color:var(--muted);font-size:15px">Instalacja jest jednorazowa, zwykle przez Helm: <code>helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --set crds.enabled=true</code>. Do serwera ACME warto najpierw podpiąć środowisko testowe Let's Encrypt (<code>acme-staging-v02</code>), bo produkcyjne ma limity zamówień.</p>
+
+  <h2>Obiekty cert-managera</h2>
+  <p>cert-manager dodaje do klastra własne typy obiektów (CRD). Zaglądasz do nich, gdy certyfikat nie powstaje.</p>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Obiekt</th><th>Kto tworzy</th><th>Co opisuje</th></tr>
+      <tr><td><code>Issuer</code> / <code>ClusterIssuer</code></td><td>Ty</td><td>skąd brać certyfikaty: Let's Encrypt, własne CA, SelfSigned, Vault. Issuer działa w jednym namespace, ClusterIssuer w całym klastrze.</td></tr>
+      <tr><td><code>Certificate</code></td><td>Ty albo cert-manager z adnotacji Ingressa</td><td>jaka domena, który wystawca, do jakiego Secret</td></tr>
+      <tr><td><code>CertificateRequest</code></td><td>cert-manager</td><td>jedna prośba o podpisanie (CSR), nowa przy każdym odnowieniu</td></tr>
+      <tr><td><code>Order</code>, <code>Challenge</code></td><td>cert-manager</td><td>tylko dla ACME: zamówienie i weryfikacja domeny</td></tr>
+      <tr><td><code>Secret</code> (<code>kubernetes.io/tls</code>)</td><td>cert-manager</td><td>wynik: <code>tls.crt</code> i <code>tls.key</code>, których używa Ingress</td></tr>
+    </table>
+  </div>
+
+  <h2>Sposoby weryfikacji domeny</h2>
+  <p>Wybierasz je w <code>solvers</code> ClusterIssuera.</p>
+  <div class="grid-2">
+    <div class="card">
+      <h3>HTTP-01</h3>
+      <p style="margin:0">Let's Encrypt pobiera token przez HTTP z Twojej domeny. Najprostszy, ale klaster musi być osiągalny z internetu na porcie 80. Nie obsługuje certyfikatów wildcard (<code>*.example.com</code>).</p>
+    </div>
+    <div class="card">
+      <h3>DNS-01</h3>
+      <p style="margin:0">cert-manager dopisuje rekord TXT w strefie DNS przez API dostawcy (Azure DNS, Route 53, Cloudflare…). Działa dla klastrów prywatnych i pozwala na wildcard. Wymaga uprawnień do DNS.</p>
+    </div>
+  </div>
+
+  <h2>Gdy certyfikat nie powstaje</h2>
+  <p>Idź po łańcuchu obiektów od góry. Przyczyna jest w Events tego obiektu, na którym łańcuch się zatrzymał.</p>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Krok</th><th>Polecenie</th></tr>
+      <tr><td>czy certyfikat jest gotowy</td><td><code>kubectl get certificate</code>: kolumna <code>READY</code></td></tr>
+      <tr><td>dlaczego nie</td><td><code>kubectl describe certificate todos-tls</code></td></tr>
+      <tr><td>cały łańcuch naraz</td><td><code>kubectl get certificaterequest,order,challenge</code></td></tr>
+      <tr><td>najczęstszy winowajca</td><td><code>kubectl describe challenge</code>: DNS nie wskazuje na klaster, port 80 zamknięty albo zła <code>ingressClassName</code> solvera</td></tr>
+      <tr><td>co jest w certyfikacie</td><td><code>kubectl get secret todos-tls -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -noout -subject -dates</code></td></tr>
+    </table>
+  </div>
+
+  <footer>Inne strony: <a href="k8s-droga-zapytania.html">droga zapytania</a> · <a href="diagnostyka-poda.html">diagnostyka poda</a> · <a href="compose-vs-k8s.html">Compose a Kubernetes</a> · <a href="docker-obraz-i-warstwy.html">obraz i warstwy</a></footer>
+</main>
+
+<script>
+// Diagram krok po kroku.
+// Struktura:  <div data-kroki> <svg class="diagram">…elementy z data-step="1 2"…</svg>
+//             <div class="stepper">[data-prev] [data-next] [data-all] .counter</div>
+//             <div class="explain"></div>
+//             <div hidden data-opisy><section data-title="…">treść</section>…</div> </div>
+// Krok 0 = widok całości. Strzałki ← → działają, gdy fokus jest w bloku.
+document.querySelectorAll("[data-kroki]").forEach(function (root) {
+  var svg = root.querySelector("svg.diagram");
+  var explain = root.querySelector(".explain");
+  var counter = root.querySelector(".counter");
+  var opisy = Array.prototype.slice.call(root.querySelectorAll("[data-opisy] > section"));
+  var elems = Array.prototype.slice.call(svg.querySelectorAll("[data-step]"));
+  var intro = explain.innerHTML;
+  var n = opisy.length;
+  var cur = 0;
+
+  function show(k) {
+    cur = Math.max(0, Math.min(n, k));
+    if (cur === 0) {
+      svg.classList.remove("stepping");
+      explain.innerHTML = intro;
+      counter.textContent = n + " kroków";
+    } else {
+      svg.classList.add("stepping");
+      elems.forEach(function (el) {
+        var steps = el.getAttribute("data-step").split(" ").map(Number);
+        var on = steps.indexOf(cur) !== -1;
+        var done = !on && Math.min.apply(null, steps) < cur;
+        el.classList.toggle("on", on);
+        el.classList.toggle("done", done);
+      });
+      var s = opisy[cur - 1];
+      explain.innerHTML = "<h3>" + cur + ". " + s.getAttribute("data-title") + "</h3>" + s.innerHTML;
+      counter.textContent = "krok " + cur + " z " + n;
+    }
+    root.querySelector("[data-prev]").disabled = cur === 0;
+    root.querySelector("[data-next]").textContent = cur === 0 ? "Start ▶" : cur === n ? "Od początku ↺" : "Dalej ▶";
+  }
+
+  root.querySelector("[data-next]").addEventListener("click", function () {
+    show(cur === n ? 1 : cur + 1);
+  });
+  root.querySelector("[data-prev]").addEventListener("click", function () {
+    show(cur - 1);
+  });
+  root.querySelector("[data-all]").addEventListener("click", function () {
+    show(0);
+  });
+  root.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight") {
+      show(cur === n ? n : cur + 1);
+      e.preventDefault();
+    }
+    if (e.key === "ArrowLeft") {
+      show(cur - 1);
+      e.preventDefault();
+    }
+  });
+  show(0);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compose a Kubernetes</title>
+<style>
+/* Wspólny styl stron w docs/. Działa offline, bez zewnętrznych czcionek i bibliotek. */
+:root {
+  --bg: #f6f6f3;
+  --surface: #ffffff;
+  --surface-2: #f0f0ec;
+  --text: #1c1c1e;
+  --muted: #5d6066;
+  --border: #d9d9d3;
+  --accent: #2f64d6;
+  --accent-soft: #e3ebfb;
+  --docker: #1d63ed;
+  --ok: #1d7a3a;
+  --ok-soft: #dff1e4;
+  --warn: #a75a00;
+  --warn-soft: #fbecd7;
+  --err: #b42318;
+  --err-soft: #fbe2df;
+  --code-bg: #f1f1ed;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.04);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141517;
+    --surface: #1c1d20;
+    --surface-2: #24262a;
+    --text: #e9e9ea;
+    --muted: #a0a3a9;
+    --border: #34363b;
+    --accent: #7ea6ff;
+    --accent-soft: #1f2b45;
+    --docker: #6f9dff;
+    --ok: #5cc27b;
+    --ok-soft: #173222;
+    --warn: #f0a94b;
+    --warn-soft: #3a2a14;
+    --err: #ff8a7d;
+    --err-soft: #3d1c19;
+    --code-bg: #24262a;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #141517;
+  --surface: #1c1d20;
+  --surface-2: #24262a;
+  --text: #e9e9ea;
+  --muted: #a0a3a9;
+  --border: #34363b;
+  --accent: #7ea6ff;
+  --accent-soft: #1f2b45;
+  --docker: #6f9dff;
+  --ok: #5cc27b;
+  --ok-soft: #173222;
+  --warn: #f0a94b;
+  --warn-soft: #3a2a14;
+  --err: #ff8a7d;
+  --err-soft: #3d1c19;
+  --code-bg: #24262a;
+  --shadow: none;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 16px 80px;
+}
+
+.crumbs {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.crumbs a {
+  color: var(--muted);
+}
+
+h1 {
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 720px;
+  margin: 0 0 40px;
+}
+
+h2 {
+  font-size: 24px;
+  margin: 56px 0 8px;
+  letter-spacing: -0.01em;
+}
+
+h2 + p {
+  margin-top: 0;
+  color: var(--muted);
+  max-width: 720px;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 0 0 6px;
+}
+
+a {
+  color: var(--accent);
+}
+
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+code {
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+  gap: 16px;
+}
+
+.note {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 16px 0;
+}
+
+.note.warn {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.note.ok {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.note.err {
+  border-color: var(--err);
+  background: var(--err-soft);
+}
+
+/* diagramy */
+.diagram {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.diagram text {
+  fill: var(--text);
+  font-family: inherit;
+}
+
+.diagram .muted {
+  fill: var(--muted);
+}
+
+.diagram .box {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.diagram .zone {
+  fill: var(--surface-2);
+  stroke: var(--border);
+  stroke-dasharray: 5 4;
+}
+
+.diagram .line {
+  stroke: var(--muted);
+  stroke-width: 1.6;
+  fill: none;
+}
+
+.diagram .arrowhead {
+  fill: var(--muted);
+}
+
+.diagram .step {
+  transition: opacity 0.25s;
+}
+
+.diagram.stepping .step {
+  opacity: 0.28;
+}
+
+.diagram.stepping .step.on {
+  opacity: 1;
+}
+
+.diagram.stepping .step.on .box {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  fill: var(--accent-soft);
+}
+
+.diagram.stepping .step.on .line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.diagram.stepping .step.on .arrowhead {
+  fill: var(--accent);
+}
+
+.diagram.stepping .step.done {
+  opacity: 0.75;
+}
+
+/* sterowanie krokami */
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+button {
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+}
+
+button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.counter {
+  color: var(--muted);
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.explain {
+  margin-top: 12px;
+  min-height: 96px;
+}
+
+.explain h3 {
+  color: var(--accent);
+}
+
+.explain p {
+  margin: 4px 0;
+}
+
+/* tabele */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.tag.ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.tag.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.tag.err {
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+footer {
+  margin-top: 64px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* szerokie diagramy przewijają się w ramce, a nie całą stroną */
+.scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll > svg {
+  min-width: 760px;
+}
+
+/* chipy podów w animacji rolling update */
+.rs-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.rs-label {
+  width: 210px;
+  flex: none;
+  font-size: 14px;
+}
+
+.rs-label code {
+  font-size: 13px;
+}
+
+.pods {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 40px;
+}
+
+.pod {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  min-width: 92px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.pod.ready {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.pod.starting {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-style: dashed;
+}
+
+.pod.failing {
+  border-color: var(--err);
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+.pod.terminating {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.meter {
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+/* tekst w diagramach */
+.diagram .t {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.diagram .s {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .lbl {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .dashed {
+  stroke-dasharray: 5 4;
+}
+</style>
+<style>
+  .diagram [data-pair] {
+    transition: opacity 0.25s;
+  }
+
+  .diagram.picking [data-pair] {
+    opacity: 0.3;
+  }
+
+  .diagram.picking [data-pair].hl {
+    opacity: 1;
+  }
+
+  .diagram.picking [data-pair].hl .box,
+  .diagram.picking [data-pair].hl.zone {
+    stroke: var(--accent);
+    stroke-width: 2.5;
+    fill: var(--accent-soft);
+  }
+
+  .diagram .side {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 20px 0 8px;
+  }
+
+  .pair-detail h3 {
+    font-size: 20px;
+    margin: 12px 0 4px;
+  }
+
+  .pair-detail .col-title {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 12px 0 0;
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="crumbs"><a href="README.md">docs</a> / Compose a Kubernetes</div>
+  <h1>Compose a Kubernetes: ta sama aplikacja, inne obiekty</h1>
+  <p class="lead">W lab04 uruchamiasz ToDos w Compose, w lab09 tę samą aplikację na Kubernetesie. Obrazy się nie zmieniają, zmienia się sposób opisu. Wybierz element, żeby zobaczyć, co czemu odpowiada.</p>
+
+  <div class="card">
+    <div class="scroll">
+      <svg class="diagram" id="mapa" viewBox="0 0 1000 420" role="img" aria-label="Po lewej ToDos w Docker Compose, po prawej ten sam ToDos w Kubernetesie">
+        <!-- COMPOSE -->
+        <rect class="zone" x="10" y="20" width="440" height="390" rx="12"/>
+        <text class="side" x="26" y="46">Docker Compose · jeden komputer</text>
+
+        <g data-pair="ports">
+          <rect class="box" x="30" y="62" width="400" height="44" rx="8"/>
+          <text class="t" x="230" y="89" text-anchor="middle">ports: "8080:8080" → localhost:8080</text>
+        </g>
+
+        <rect class="zone" data-pair="dns" x="30" y="122" width="400" height="196" rx="10"/>
+        <text class="lbl" x="44" y="142">sieć todos_default · DNS po nazwach usług</text>
+
+        <g data-pair="svc scale">
+          <rect class="box" x="45" y="154" width="120" height="58" rx="8"/>
+          <text class="t" x="105" y="178" text-anchor="middle">web</text>
+          <text class="s" x="105" y="197" text-anchor="middle">1 kontener</text>
+          <rect class="box" x="175" y="154" width="120" height="58" rx="8"/>
+          <text class="t" x="235" y="178" text-anchor="middle">api</text>
+          <text class="s" x="235" y="197" text-anchor="middle">1 kontener</text>
+          <rect class="box" x="305" y="154" width="110" height="58" rx="8"/>
+          <text class="t" x="360" y="178" text-anchor="middle">mongo</text>
+          <text class="s" x="360" y="197" text-anchor="middle">1 kontener</text>
+        </g>
+
+        <g data-pair="env">
+          <rect class="box" x="175" y="226" width="120" height="52" rx="8"/>
+          <text class="t" x="235" y="248" text-anchor="middle">environment:</text>
+          <text class="s" x="235" y="266" text-anchor="middle">MONGO_URL, …</text>
+        </g>
+
+        <g data-pair="health">
+          <rect class="box" x="305" y="226" width="110" height="52" rx="8"/>
+          <text class="t" x="360" y="248" text-anchor="middle">healthcheck</text>
+          <text class="s" x="360" y="266" text-anchor="middle">+ depends_on</text>
+        </g>
+
+        <g data-pair="img">
+          <rect class="box" x="30" y="340" width="250" height="52" rx="8"/>
+          <text class="t" x="155" y="362" text-anchor="middle">build: ../app/todos/api</text>
+          <text class="s" x="155" y="380" text-anchor="middle">obraz od razu w lokalnym Dockerze</text>
+        </g>
+
+        <g data-pair="vol">
+          <path class="line" d="M415 183 H423 V331"/>
+          <polygon class="arrowhead" points="423,340 418,331 428,331"/>
+          <rect class="box" x="305" y="340" width="125" height="52" rx="8"/>
+          <text class="t" x="367.5" y="362" text-anchor="middle">volume</text>
+          <text class="s" x="367.5" y="380" text-anchor="middle">mongo-data</text>
+        </g>
+
+        <!-- środek -->
+        <path class="line" d="M462 215 H529"/>
+        <polygon class="arrowhead" points="538,215 529,210 529,220"/>
+        <text class="lbl" x="500" y="204" text-anchor="middle">lab04 → lab09</text>
+
+        <!-- KUBERNETES -->
+        <rect class="zone" x="550" y="20" width="440" height="390" rx="12"/>
+        <text class="side" x="566" y="46">Kubernetes · klaster z wieloma węzłami</text>
+
+        <g data-pair="ports">
+          <rect class="box" x="570" y="62" width="400" height="44" rx="8"/>
+          <text class="t" x="770" y="89" text-anchor="middle">Ingress todos → http://todos.localhost</text>
+        </g>
+
+        <rect class="zone" data-pair="dns" x="570" y="122" width="400" height="196" rx="10"/>
+        <text class="lbl" x="584" y="142">namespace · DNS klastra po nazwach Service</text>
+
+        <g data-pair="svc">
+          <rect class="box" x="585" y="152" width="120" height="30" rx="6"/>
+          <text class="t" x="645" y="172" text-anchor="middle">Service web</text>
+          <rect class="box" x="715" y="152" width="120" height="30" rx="6"/>
+          <text class="t" x="775" y="172" text-anchor="middle">Service api</text>
+          <rect class="box" x="845" y="152" width="110" height="30" rx="6"/>
+          <text class="t" x="900" y="172" text-anchor="middle">Service mongo</text>
+        </g>
+        <g data-pair="svc scale">
+          <rect class="box" x="585" y="188" width="120" height="30" rx="6"/>
+          <text class="t" x="645" y="208" text-anchor="middle">Deploy · 2 pody</text>
+          <rect class="box" x="715" y="188" width="120" height="30" rx="6"/>
+          <text class="t" x="775" y="208" text-anchor="middle">Deploy · 2 pody</text>
+          <rect class="box" x="845" y="188" width="110" height="30" rx="6"/>
+          <text class="t" x="900" y="208" text-anchor="middle">Deploy · 1 pod</text>
+        </g>
+
+        <g data-pair="health">
+          <rect class="box" x="585" y="226" width="120" height="52" rx="8"/>
+          <text class="t" x="645" y="248" text-anchor="middle">readinessProbe</text>
+          <text class="s" x="645" y="266" text-anchor="middle">+ livenessProbe</text>
+        </g>
+
+        <g data-pair="env">
+          <rect class="box" x="715" y="226" width="120" height="52" rx="8"/>
+          <text class="t" x="775" y="248" text-anchor="middle">ConfigMap</text>
+          <text class="s" x="775" y="266" text-anchor="middle">+ Secret, envFrom</text>
+        </g>
+
+        <g data-pair="img">
+          <rect class="box" x="570" y="340" width="250" height="52" rx="8"/>
+          <text class="t" x="695" y="362" text-anchor="middle">kind load docker-image</text>
+          <text class="s" x="695" y="380" text-anchor="middle">obraz trzeba dostarczyć do węzłów</text>
+        </g>
+
+        <g data-pair="vol">
+          <path class="line" d="M900 218 V331"/>
+          <polygon class="arrowhead" points="900,340 895,331 905,331"/>
+          <rect class="box" x="845" y="340" width="125" height="52" rx="8"/>
+          <text class="t" x="907.5" y="362" text-anchor="middle">PVC</text>
+          <text class="s" x="907.5" y="380" text-anchor="middle">mongo-data</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="tabs" role="group" aria-label="Wybierz element"></div>
+    <div class="pair-detail" aria-live="polite"></div>
+  </div>
+
+  <h2>Czego Compose nie daje</h2>
+  <p>Kubernetes nie jest „większym Compose”. Te rzeczy dostajesz dodatkowo, bez zmian w aplikacji.</p>
+  <div class="grid-2">
+    <div class="card"><h3>Samonaprawa</h3><p>Padnie pod albo cały węzeł, a ReplicaSet uruchomi brakujące pody gdzie indziej. Compose restartuje kontener tylko na tym samym komputerze.</p></div>
+    <div class="card"><h3>Wiele węzłów</h3><p>Scheduler rozkłada pody na węzły według zasobów. Compose zna tylko jeden host.</p></div>
+    <div class="card"><h3>Wymiana wersji bez przerwy</h3><p>Rolling update podmienia pody stopniowo i wpuszcza ruch tylko do gotowych. W Compose <code>up</code> zatrzymuje stary kontener i uruchamia nowy.</p></div>
+    <div class="card"><h3>Autoskalowanie</h3><p>HPA dodaje i usuwa pody według zużycia CPU. W Compose liczbę instancji ustawiasz ręcznie.</p></div>
+  </div>
+
+  <div class="note">
+    <strong>Compose zostaje w użyciu.</strong> Do pracy lokalnej i testów jest prostszy. Typowy podział: Compose na laptopie, Kubernetes na środowiskach współdzielonych. Te same obrazy działają w obu.
+  </div>
+
+  <footer>Inne strony: <a href="k8s-droga-zapytania.html">droga zapytania</a> · <a href="diagnostyka-poda.html">diagnostyka poda</a> · <a href="docker-obraz-i-warstwy.html">obraz i warstwy</a> · <a href="docker.md">ściąga Docker</a></footer>
+</main>
+
+<script>
+(function () {
+  function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  }
+
+  var pairs = [
+    {
+      k: "svc", t: "Usługa → Deployment + Service",
+      opis: "W Compose jeden wpis w <code>services:</code> mówi, co uruchomić, i od razu daje nazwę w sieci. W Kubernetesie to dwa obiekty: <strong>Deployment</strong> pilnuje podów (ile, z jakiego obrazu), a <strong>Service</strong> daje im stały adres i nazwę.",
+      c: "services:\n  api:\n    image: todos-api:1.0",
+      k8s: "kind: Deployment\nmetadata:\n  name: api\nspec:\n  replicas: 2\n  template:\n    spec:\n      containers:\n        - name: api\n          image: todos-api:1.0\n---\nkind: Service\nmetadata:\n  name: api\nspec:\n  selector:\n    app: api\n  ports:\n    - port: 3000"
+    },
+    {
+      k: "dns", t: "Sieć Compose → DNS klastra",
+      opis: "W obu przypadkach kontenery znajdują się po nazwie. W Compose to nazwa usługi, w Kubernetesie nazwa Service'u. Dlatego <code>http://api:3000</code> w nginx i <code>mongodb://mongo:27017</code> w API działają bez zmian: wystarczy nazwać Service tak samo jak usługę.",
+      c: "# web szuka api pod tą nazwą\nENV API_URL=http://api:3000\n\n# api szuka bazy\nMONGO_URL: mongodb://mongo:27017",
+      k8s: "# te same adresy, bo Service nazywają się\n# api i mongo\nkubectl run klient --rm -it \\\n  --image=busybox:1.37 -- \\\n  wget -qO- http://api:3000/healthz"
+    },
+    {
+      k: "ports", t: "ports → Ingress",
+      opis: "W Compose port kontenera publikujesz na porcie laptopa. W Kubernetesie na zewnątrz wystawia się aplikację przez <strong>Ingress</strong>: reguła „host → Service”, którą obsługuje Ingress Controller (u nas Traefik). Na zewnątrz wystawiamy tylko web, a api i mongo są dostępne wyłącznie wewnątrz klastra.",
+      c: "web:\n  ports:\n    - \"8080:8080\"",
+      k8s: "kind: Ingress\nspec:\n  rules:\n    - host: todos.localhost\n      http:\n        paths:\n          - path: /\n            pathType: Prefix\n            backend:\n              service:\n                name: web\n                port:\n                  number: 80"
+    },
+    {
+      k: "env", t: "environment → ConfigMap i Secret",
+      opis: "Konfiguracja wychodzi z definicji kontenera do osobnych obiektów. <strong>ConfigMap</strong> na zwykłe ustawienia, <strong>Secret</strong> na hasła i adresy z danymi logowania. <code>envFrom</code> zamienia każdy klucz na zmienną środowiskową, więc aplikacja widzi to samo, co w Compose.",
+      c: "api:\n  environment:\n    MONGO_URL: mongodb://mongo:27017\n    APP_VERSION: \"1.0\"",
+      k8s: "kind: ConfigMap\nmetadata:\n  name: api-config\ndata:\n  APP_VERSION: \"1.0\"\n---\nkind: Secret\nmetadata:\n  name: api-secret\nstringData:\n  MONGO_URL: mongodb://mongo:27017\n---\n# w kontenerze api\nenvFrom:\n  - configMapRef:\n      name: api-config\n  - secretRef:\n      name: api-secret"
+    },
+    {
+      k: "health", t: "healthcheck + depends_on → sondy",
+      opis: "Kubernetes nie ma <code>depends_on</code>: pody startują równolegle. Zamiast kolejności startu jest <strong>readinessProbe</strong>: ToDos API zwraca 503 na <code>/readyz</code>, dopóki nie połączy się z bazą, więc nie dostaje ruchu za wcześnie. <strong>livenessProbe</strong> restartuje kontener, który przestał odpowiadać.",
+      c: "mongo:\n  healthcheck:\n    test:\n      - CMD\n      - mongosh\n      - --eval\n      - db.adminCommand('ping').ok\napi:\n  depends_on:\n    mongo:\n      condition: service_healthy",
+      k8s: "readinessProbe:\n  httpGet:\n    path: /readyz\n    port: 3000\nlivenessProbe:\n  httpGet:\n    path: /healthz\n    port: 3000"
+    },
+    {
+      k: "vol", t: "volume → PersistentVolumeClaim",
+      opis: "Wolumen Compose to katalog na dysku Twojego komputera. W klastrze pod może trafić na dowolny węzeł, więc prosisz o dysk obiektem <strong>PVC</strong>, a klaster go dostarcza. Dla bazy z jednym dyskiem <code>strategy: Recreate</code> pilnuje, żeby nigdy nie działały dwa pody naraz.",
+      c: "mongo:\n  volumes:\n    - mongo-data:/data/db\n\nvolumes:\n  mongo-data:",
+      k8s: "kind: PersistentVolumeClaim\nmetadata:\n  name: mongo-data\nspec:\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gi\n---\n# w Deploymencie mongo\nvolumeMounts:\n  - name: data\n    mountPath: /data/db\nvolumes:\n  - name: data\n    persistentVolumeClaim:\n      claimName: mongo-data"
+    },
+    {
+      k: "img", t: "build → obraz na węzłach",
+      opis: "Compose buduje obraz i od razu go używa, bo wszystko dzieje się na jednym komputerze. Węzły klastra mają własne magazyny obrazów. Na kind wgrywasz obraz poleceniem <code>kind load</code>, a w prawdziwym klastrze robisz <code>docker push</code> do rejestru.",
+      c: "api:\n  build: ../../../app/todos/api\n  image: todos-api:1.0",
+      k8s: "docker compose build\nkind load docker-image \\\n  todos-api:1.0 todos-web:1.0 \\\n  --name szkolenie\n\n# w manifeście\nimagePullPolicy: IfNotPresent"
+    },
+    {
+      k: "scale", t: "--scale → replicas",
+      opis: "Liczba instancji w Compose to parametr polecenia. W Kubernetesie to pole w Deploymencie: stan docelowy, którego klaster pilnuje cały czas. Pod usunięty ręcznie wraca.",
+      c: "docker compose up -d --scale api=3",
+      k8s: "spec:\n  replicas: 3\n\n# albo doraźnie\nkubectl scale deploy api --replicas=3"
+    }
+  ];
+
+  var svg = document.getElementById("mapa");
+  var tabs = document.querySelector(".tabs");
+  var detail = document.querySelector(".pair-detail");
+  var els = svg.querySelectorAll("[data-pair]");
+
+  pairs.forEach(function (p) {
+    var b = document.createElement("button");
+    b.textContent = p.t.split(" → ")[0];
+    b.setAttribute("data-k", p.k);
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", function () { pick(p.k); });
+    tabs.appendChild(b);
+  });
+
+  function pick(k) {
+    var p = pairs.filter(function (x) { return x.k === k; })[0];
+    svg.classList.add("picking");
+    els.forEach(function (el) {
+      el.classList.toggle("hl", el.getAttribute("data-pair").split(" ").indexOf(k) !== -1);
+    });
+    tabs.querySelectorAll("button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-k") === k));
+    });
+    detail.innerHTML =
+      "<h3>" + p.t + "</h3><p>" + p.opis + "</p>" +
+      "<div class='grid-2'>" +
+      "<div><p class='col-title'>Compose (lab04)</p><pre><code>" + esc(p.c) + "</code></pre></div>" +
+      "<div><p class='col-title'>Kubernetes (lab09)</p><pre><code>" + esc(p.k8s) + "</code></pre></div>" +
+      "</div>";
+  }
+
+  pick("svc");
+})();
+</script>
+</body>
+</html>

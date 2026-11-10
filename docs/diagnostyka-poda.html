@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnostyka poda</title>
+<style>
+/* Wspólny styl stron w docs/. Działa offline, bez zewnętrznych czcionek i bibliotek. */
+:root {
+  --bg: #f6f6f3;
+  --surface: #ffffff;
+  --surface-2: #f0f0ec;
+  --text: #1c1c1e;
+  --muted: #5d6066;
+  --border: #d9d9d3;
+  --accent: #2f64d6;
+  --accent-soft: #e3ebfb;
+  --docker: #1d63ed;
+  --ok: #1d7a3a;
+  --ok-soft: #dff1e4;
+  --warn: #a75a00;
+  --warn-soft: #fbecd7;
+  --err: #b42318;
+  --err-soft: #fbe2df;
+  --code-bg: #f1f1ed;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.04);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141517;
+    --surface: #1c1d20;
+    --surface-2: #24262a;
+    --text: #e9e9ea;
+    --muted: #a0a3a9;
+    --border: #34363b;
+    --accent: #7ea6ff;
+    --accent-soft: #1f2b45;
+    --docker: #6f9dff;
+    --ok: #5cc27b;
+    --ok-soft: #173222;
+    --warn: #f0a94b;
+    --warn-soft: #3a2a14;
+    --err: #ff8a7d;
+    --err-soft: #3d1c19;
+    --code-bg: #24262a;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #141517;
+  --surface: #1c1d20;
+  --surface-2: #24262a;
+  --text: #e9e9ea;
+  --muted: #a0a3a9;
+  --border: #34363b;
+  --accent: #7ea6ff;
+  --accent-soft: #1f2b45;
+  --docker: #6f9dff;
+  --ok: #5cc27b;
+  --ok-soft: #173222;
+  --warn: #f0a94b;
+  --warn-soft: #3a2a14;
+  --err: #ff8a7d;
+  --err-soft: #3d1c19;
+  --code-bg: #24262a;
+  --shadow: none;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 16px 80px;
+}
+
+.crumbs {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.crumbs a {
+  color: var(--muted);
+}
+
+h1 {
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 720px;
+  margin: 0 0 40px;
+}
+
+h2 {
+  font-size: 24px;
+  margin: 56px 0 8px;
+  letter-spacing: -0.01em;
+}
+
+h2 + p {
+  margin-top: 0;
+  color: var(--muted);
+  max-width: 720px;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 0 0 6px;
+}
+
+a {
+  color: var(--accent);
+}
+
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+code {
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+  gap: 16px;
+}
+
+.note {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 16px 0;
+}
+
+.note.warn {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.note.ok {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.note.err {
+  border-color: var(--err);
+  background: var(--err-soft);
+}
+
+/* diagramy */
+.diagram {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.diagram text {
+  fill: var(--text);
+  font-family: inherit;
+}
+
+.diagram .muted {
+  fill: var(--muted);
+}
+
+.diagram .box {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.diagram .zone {
+  fill: var(--surface-2);
+  stroke: var(--border);
+  stroke-dasharray: 5 4;
+}
+
+.diagram .line {
+  stroke: var(--muted);
+  stroke-width: 1.6;
+  fill: none;
+}
+
+.diagram .arrowhead {
+  fill: var(--muted);
+}
+
+.diagram .step {
+  transition: opacity 0.25s;
+}
+
+.diagram.stepping .step {
+  opacity: 0.28;
+}
+
+.diagram.stepping .step.on {
+  opacity: 1;
+}
+
+.diagram.stepping .step.on .box {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  fill: var(--accent-soft);
+}
+
+.diagram.stepping .step.on .line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.diagram.stepping .step.on .arrowhead {
+  fill: var(--accent);
+}
+
+.diagram.stepping .step.done {
+  opacity: 0.75;
+}
+
+/* sterowanie krokami */
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+button {
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+}
+
+button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.counter {
+  color: var(--muted);
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.explain {
+  margin-top: 12px;
+  min-height: 96px;
+}
+
+.explain h3 {
+  color: var(--accent);
+}
+
+.explain p {
+  margin: 4px 0;
+}
+
+/* tabele */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.tag.ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.tag.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.tag.err {
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+footer {
+  margin-top: 64px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* szerokie diagramy przewijają się w ramce, a nie całą stroną */
+.scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll > svg {
+  min-width: 760px;
+}
+
+/* chipy podów w animacji rolling update */
+.rs-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.rs-label {
+  width: 210px;
+  flex: none;
+  font-size: 14px;
+}
+
+.rs-label code {
+  font-size: 13px;
+}
+
+.pods {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 40px;
+}
+
+.pod {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  min-width: 92px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.pod.ready {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.pod.starting {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-style: dashed;
+}
+
+.pod.failing {
+  border-color: var(--err);
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+.pod.terminating {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.meter {
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+/* tekst w diagramach */
+.diagram .t {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.diagram .s {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .lbl {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .dashed {
+  stroke-dasharray: 5 4;
+}
+</style>
+<style>
+  .diagram .errbox rect {
+    fill: var(--err-soft);
+    stroke: var(--err);
+    stroke-width: 1.5;
+  }
+
+  .diagram .errbox text {
+    fill: var(--err);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .diagram .errbox {
+    cursor: pointer;
+  }
+
+  .diagram .errbox:hover rect,
+  .diagram .errbox:focus-visible rect,
+  .diagram .errbox.sel rect {
+    stroke-width: 3;
+  }
+
+  .diagram .errbox:focus {
+    outline: none;
+  }
+
+  .diagram .errbox.sel rect {
+    fill: var(--err);
+  }
+
+  .diagram .errbox.sel text {
+    fill: var(--surface);
+  }
+
+  .diagram .stage .num {
+    font-size: 12px;
+    font-weight: 700;
+    fill: var(--accent);
+  }
+
+  .cases {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 24px 0 12px;
+  }
+
+  .detail h3 {
+    font-size: 22px;
+    margin: 0 0 4px;
+    color: var(--err);
+  }
+
+  .detail .stage-name {
+    color: var(--muted);
+    margin: 0 0 16px;
+  }
+
+  .detail h4 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 20px 0 6px;
+  }
+
+  .detail ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+
+  .detail li {
+    margin: 4px 0;
+  }
+
+  ol.order {
+    padding-left: 20px;
+  }
+
+  ol.order li {
+    margin: 8px 0;
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="crumbs"><a href="README.md">docs</a> / Diagnostyka poda</div>
+  <h1>Diagnostyka poda: status mówi, gdzie szukać</h1>
+  <p class="lead">Pod przechodzi przez kolejne etapy: przydział węzła, pobranie obrazu, start, gotowość, ruch. Każdy błąd w <code>kubectl get pods</code> pokazuje, na którym etapie się zatrzymał. Kliknij błąd, żeby zobaczyć, co sprawdzić i jak naprawić.</p>
+
+  <div class="card">
+    <div class="scroll">
+      <svg class="diagram" id="mapa" viewBox="0 0 1000 270" role="img" aria-label="Etapy życia poda i błędy na każdym etapie">
+        <g class="stage">
+          <rect class="box" x="20" y="30" width="160" height="70" rx="8"/>
+          <text class="t" x="100" y="62" text-anchor="middle">Przydział węzła</text>
+          <text class="s" x="100" y="82" text-anchor="middle">scheduler</text>
+        </g>
+        <g class="stage">
+          <rect class="box" x="220" y="30" width="160" height="70" rx="8"/>
+          <text class="t" x="300" y="62" text-anchor="middle">Obraz i konfiguracja</text>
+          <text class="s" x="300" y="82" text-anchor="middle">kubelet</text>
+        </g>
+        <g class="stage">
+          <rect class="box" x="420" y="30" width="160" height="70" rx="8"/>
+          <text class="t" x="500" y="62" text-anchor="middle">Start aplikacji</text>
+          <text class="s" x="500" y="82" text-anchor="middle">Twój kod</text>
+        </g>
+        <g class="stage">
+          <rect class="box" x="620" y="30" width="160" height="70" rx="8"/>
+          <text class="t" x="700" y="62" text-anchor="middle">Gotowość</text>
+          <text class="s" x="700" y="82" text-anchor="middle">readinessProbe</text>
+        </g>
+        <g class="stage">
+          <rect class="box" x="820" y="30" width="160" height="70" rx="8"/>
+          <text class="t" x="900" y="62" text-anchor="middle">Ruch</text>
+          <text class="s" x="900" y="82" text-anchor="middle">Service, Ingress</text>
+        </g>
+        <path class="line" d="M180 65 H211 M380 65 H411 M580 65 H611 M780 65 H811"/>
+        <polygon class="arrowhead" points="220,65 211,60 211,70"/>
+        <polygon class="arrowhead" points="420,65 411,60 411,70"/>
+        <polygon class="arrowhead" points="620,65 611,60 611,70"/>
+        <polygon class="arrowhead" points="820,65 811,60 811,70"/>
+
+        <path class="line dashed" d="M100 100 V140 M300 100 V140 M500 100 V140 M700 100 V140 M900 100 V140"/>
+
+        <g class="errbox" data-case="pending" tabindex="0" role="button" aria-label="Pending">
+          <rect x="30" y="140" width="140" height="44" rx="8"/>
+          <text x="100" y="167" text-anchor="middle">Pending</text>
+        </g>
+        <g class="errbox" data-case="pull" tabindex="0" role="button" aria-label="ImagePullBackOff">
+          <rect x="225" y="140" width="150" height="44" rx="8"/>
+          <text x="300" y="167" text-anchor="middle">ImagePullBackOff</text>
+        </g>
+        <g class="errbox" data-case="config" tabindex="0" role="button" aria-label="CreateContainerConfigError">
+          <rect x="225" y="196" width="150" height="56" rx="8"/>
+          <text x="300" y="220" text-anchor="middle">CreateContainer</text>
+          <text x="300" y="238" text-anchor="middle">ConfigError</text>
+        </g>
+        <g class="errbox" data-case="crash" tabindex="0" role="button" aria-label="CrashLoopBackOff">
+          <rect x="425" y="140" width="150" height="44" rx="8"/>
+          <text x="500" y="167" text-anchor="middle">CrashLoopBackOff</text>
+        </g>
+        <g class="errbox" data-case="oom" tabindex="0" role="button" aria-label="OOMKilled">
+          <rect x="425" y="196" width="150" height="44" rx="8"/>
+          <text x="500" y="223" text-anchor="middle">OOMKilled</text>
+        </g>
+        <g class="errbox" data-case="ready" tabindex="0" role="button" aria-label="Running, 0/1 READY">
+          <rect x="625" y="140" width="150" height="56" rx="8"/>
+          <text x="700" y="164" text-anchor="middle">Running,</text>
+          <text x="700" y="182" text-anchor="middle">0/1 READY</text>
+        </g>
+        <g class="errbox" data-case="traffic" tabindex="0" role="button" aria-label="1/1 READY, ale brak odpowiedzi">
+          <rect x="825" y="140" width="150" height="56" rx="8"/>
+          <text x="900" y="164" text-anchor="middle">1/1 READY, ale</text>
+          <text x="900" y="182" text-anchor="middle">brak odpowiedzi</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="cases" role="group" aria-label="Wybierz status"></div>
+    <div class="detail" aria-live="polite"></div>
+  </div>
+
+  <h2>Kolejność, gdy nie wiesz, od czego zacząć</h2>
+  <p>Te same kroki pasują do prawie każdego problemu.</p>
+  <div class="card">
+    <ol class="order">
+      <li><code>kubectl get pods</code>: kolumny STATUS, READY i RESTARTS pokazują etap.</li>
+      <li><code>kubectl describe pod &lt;nazwa&gt;</code>: sekcja <strong>Events</strong> na dole, a przy restartach <strong>Last State</strong> z powodem i kodem wyjścia.</li>
+      <li><code>kubectl logs &lt;nazwa&gt;</code>, a gdy puste, to <code>--previous</code>, czyli logi poprzedniego, „martwego” uruchomienia.</li>
+      <li><code>kubectl get endpointslices -l kubernetes.io/service-name=&lt;service&gt;</code>: czy Service w ogóle widzi pody.</li>
+      <li><code>kubectl port-forward pod/&lt;nazwa&gt; 8080:&lt;port&gt;</code>: czy aplikacja odpowiada z pominięciem Service i Ingress.</li>
+    </ol>
+  </div>
+
+  <div class="note">
+    <strong>BackOff</strong> w nazwie statusu oznacza, że Kubernetes ponawia próbę z rosnącym odstępem: 10 s, 20 s, 40 s… do 5 minut. Po poprawce nie musisz czekać, możesz usunąć poda: <code>kubectl delete pod &lt;nazwa&gt;</code>. Deployment od razu stworzy nowego.
+  </div>
+
+  <footer>Inne strony: <a href="k8s-droga-zapytania.html">droga zapytania</a> · <a href="compose-vs-k8s.html">Compose a Kubernetes</a> · <a href="docker-obraz-i-warstwy.html">obraz i warstwy</a> · <a href="kubectl.md">ściąga kubectl</a></footer>
+</main>
+
+<script>
+(function () {
+  var cases = {
+    pending: {
+      t: "Pending",
+      st: "Etap 1: scheduler nie znalazł węzła dla poda.",
+      znaczy: "Pod jest zapisany w klastrze, ale nie ma przypisanego węzła, więc żaden kontener jeszcze nie ruszył. Dlatego <code>kubectl logs</code> nic nie pokaże.",
+      sprawdz: ["<code>kubectl describe pod &lt;nazwa&gt;</code> → Events, szukaj <code>FailedScheduling</code>", "<code>kubectl describe nodes</code> → Allocated resources", "<code>kubectl get pvc</code>, gdy pod używa dysku"],
+      przyczyny: ["<code>Insufficient cpu</code> / <code>Insufficient memory</code>: <code>requests</code> są większe niż wolne miejsce na węzłach", "PVC w stanie <code>Pending</code>: brak dysku, który pasuje do żądania", "<code>nodeSelector</code> albo taint, którego nie spełnia żaden węzeł"],
+      napraw: ["zmniejsz <code>resources.requests</code> albo liczbę replik", "popraw PVC (rozmiar, <code>storageClassName</code>)"]
+    },
+    pull: {
+      t: "ImagePullBackOff / ErrImagePull",
+      st: "Etap 2: kubelet nie może pobrać obrazu.",
+      znaczy: "Węzeł próbuje pobrać obraz z rejestru i dostaje błąd. <code>ErrImagePull</code> to pierwsza nieudana próba, <code>ImagePullBackOff</code> to czekanie przed kolejną.",
+      sprawdz: ["<code>kubectl describe pod &lt;nazwa&gt;</code> → Events, pełny komunikat rejestru", "nazwa i tag w <code>spec.containers[].image</code>"],
+      przyczyny: ["literówka w nazwie albo tagu (<code>not found</code>, <code>manifest unknown</code>)", "prywatny rejestr bez <code>imagePullSecrets</code> (<code>unauthorized</code>)", "<strong>kind:</strong> obraz zbudowany lokalnie nie trafił do klastra, bo zabrakło <code>kind load docker-image todos-api:1.0 --name szkolenie</code>", "<strong>kind:</strong> tag <code>:latest</code> albo <code>imagePullPolicy: Always</code> każe szukać obrazu w Docker Hub, mimo że jest wgrany"],
+      napraw: ["popraw obraz: <code>kubectl set image deploy/&lt;nazwa&gt; &lt;kontener&gt;=&lt;obraz&gt;:&lt;tag&gt;</code>", "przy obrazach lokalnych: <code>kind load docker-image</code> i <code>imagePullPolicy: IfNotPresent</code>"]
+    },
+    config: {
+      t: "CreateContainerConfigError",
+      st: "Etap 2: obraz jest, ale brakuje konfiguracji dla kontenera.",
+      znaczy: "Kubelet nie może złożyć konfiguracji kontenera. Najczęściej pod odwołuje się do ConfigMap albo Secret, których nie ma.",
+      sprawdz: ["<code>kubectl describe pod &lt;nazwa&gt;</code> → Events, np. <code>configmap \"api-config\" not found</code>", "<code>kubectl get configmap,secret</code> w tym samym namespace"],
+      przyczyny: ["ConfigMap albo Secret jeszcze nie utworzony (kolejność <code>apply</code>) albo jest w innym namespace", "literówka w <code>configMapRef.name</code> / <code>secretRef.name</code>", "brak klucza, do którego odwołuje się <code>configMapKeyRef</code>"],
+      napraw: ["utwórz brakujący obiekt: <code>kubectl apply -f</code>. Pod ruszy sam przy kolejnej próbie"]
+    },
+    crash: {
+      t: "CrashLoopBackOff",
+      st: "Etap 3: kontener startuje i od razu się kończy.",
+      znaczy: "Kubernetes uruchamia kontener, proces się kończy, Kubernetes uruchamia go znowu. Licznik RESTARTS rośnie. Problem jest prawie zawsze w aplikacji albo jej konfiguracji, a nie w Kubernetesie.",
+      sprawdz: ["<code>kubectl logs &lt;nazwa&gt; --previous</code>: logi uruchomienia, które padło", "<code>kubectl describe pod &lt;nazwa&gt;</code> → Last State: Reason i <code>Exit Code</code>"],
+      przyczyny: ["brak albo zła zmienna środowiskowa (adres bazy, port)", "aplikacja nie łączy się z zależnością i kończy pracę", "zły <code>command</code> / <code>args</code>, a w logach <code>not found</code>", "<code>livenessProbe</code> na złej ścieżce albo porcie: Kubernetes sam zabija zdrowy kontener (w Events: <code>Liveness probe failed</code>)", "proces kończy się normalnie (<code>Completed</code>), np. obraz bez długo działającego procesu"],
+      napraw: ["popraw konfigurację lub kod według logów", "sprawdź lokalnie: <code>docker run</code> z tymi samymi zmiennymi"]
+    },
+    oom: {
+      t: "OOMKilled",
+      st: "Etap 3: kontener przekroczył limit pamięci.",
+      znaczy: "Proces zużył więcej niż <code>resources.limits.memory</code>, więc jądro go zabiło. W STATUS zwykle widać potem <code>CrashLoopBackOff</code>, a <code>OOMKilled</code> jest w Last State.",
+      sprawdz: ["<code>kubectl describe pod &lt;nazwa&gt;</code> → Last State: <code>Reason: OOMKilled</code>, <code>Exit Code: 137</code>", "<code>kubectl top pods</code>: ile pamięci zużywa pod przed awarią"],
+      przyczyny: ["limit ustawiony za nisko dla tej aplikacji", "wyciek pamięci albo duże dane wczytywane naraz"],
+      napraw: ["podnieś <code>limits.memory</code> (i <code>requests.memory</code>) do realnego zużycia z zapasem"]
+    },
+    ready: {
+      t: "Running, ale 0/1 READY",
+      st: "Etap 4: kontener działa, ale nie przechodzi readinessProbe.",
+      znaczy: "Proces żyje, ale sonda gotowości zwraca błąd. Pod nie jest w EndpointSlice, więc Service nie wysyła do niego ruchu. Kontener nie jest restartowany, bo readiness tylko wyłącza ruch.",
+      sprawdz: ["<code>kubectl describe pod &lt;nazwa&gt;</code> → Events: <code>Readiness probe failed</code> z kodem HTTP albo <code>connection refused</code>", "<code>kubectl logs &lt;nazwa&gt;</code>", "ścieżka i port w <code>readinessProbe</code> kontra to, czego słucha aplikacja"],
+      przyczyny: ["zła ścieżka (<code>404</code>) albo port w sondzie", "aplikacja czeka na zależność, np. ToDos API zwraca błąd na <code>/readyz</code>, dopóki nie połączy się z MongoDB", "aplikacja startuje dłużej, niż sonda czeka"],
+      napraw: ["popraw <code>httpGet.path</code> / <code>port</code>", "uruchom zależność (bazę) albo popraw jej adres"]
+    },
+    traffic: {
+      t: "1/1 READY, ale aplikacja nie odpowiada",
+      st: "Etap 5: pody są zdrowe, problem jest po drodze.",
+      znaczy: "Pody są gotowe, a z przeglądarki nic. Idź po kolei od poda w stronę laptopa i znajdź pierwsze miejsce, które nie działa.",
+      sprawdz: ["pod: <code>kubectl port-forward pod/&lt;nazwa&gt; 8080:&lt;containerPort&gt;</code>", "Service: <code>kubectl get endpointslices -l kubernetes.io/service-name=&lt;service&gt;</code>. Pusta lista to zły selektor.", "Service: <code>kubectl port-forward svc/&lt;service&gt; 8080:&lt;port&gt;</code>", "Ingress: <code>kubectl describe ingress &lt;nazwa&gt;</code>: host, ścieżka, nazwa i port backendu"],
+      przyczyny: ["<code>selector</code> Service'u nie pasuje do <code>labels</code> podów (literówka, inna etykieta)", "<code>targetPort</code> inny niż port, na którym słucha aplikacja", "Ingress wskazuje zły Service, zły port albo inny host niż wpisany w przeglądarce"],
+      napraw: ["porównaj <code>kubectl get pods --show-labels</code> z <code>selector</code> Service'u", "popraw port lub backend i sprawdź ponownie od poda w górę"]
+    }
+  };
+
+  var order = ["pending", "pull", "config", "crash", "oom", "ready", "traffic"];
+  var bar = document.querySelector(".cases");
+  var detail = document.querySelector(".detail");
+  var boxes = document.querySelectorAll("#mapa .errbox");
+
+  order.forEach(function (k) {
+    var b = document.createElement("button");
+    b.textContent = cases[k].t.split(" / ")[0];
+    b.setAttribute("data-case", k);
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", function () { pick(k); });
+    bar.appendChild(b);
+  });
+
+  function list(items) {
+    return "<ul>" + items.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul>";
+  }
+
+  function pick(k) {
+    var c = cases[k];
+    detail.innerHTML =
+      "<h3>" + c.t + "</h3><p class='stage-name'>" + c.st + "</p>" +
+      "<p>" + c.znaczy + "</p>" +
+      "<div class='grid-2'>" +
+      "<div><h4>Gdzie patrzeć</h4>" + list(c.sprawdz) + "</div>" +
+      "<div><h4>Typowe przyczyny</h4>" + list(c.przyczyny) + "</div>" +
+      "</div>" +
+      "<h4>Jak naprawić</h4>" + list(c.napraw);
+    boxes.forEach(function (g) { g.classList.toggle("sel", g.getAttribute("data-case") === k); });
+    bar.querySelectorAll("button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-case") === k));
+    });
+  }
+
+  boxes.forEach(function (g) {
+    var k = g.getAttribute("data-case");
+    g.addEventListener("click", function () { pick(k); });
+    g.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { pick(k); e.preventDefault(); }
+    });
+  });
+
+  pick("crash");
+})();
+</script>
+</body>
+</html>

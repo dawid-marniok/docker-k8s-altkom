@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Obraz i warstwy</title>
+<style>
+/* Wspólny styl stron w docs/. Działa offline, bez zewnętrznych czcionek i bibliotek. */
+:root {
+  --bg: #f6f6f3;
+  --surface: #ffffff;
+  --surface-2: #f0f0ec;
+  --text: #1c1c1e;
+  --muted: #5d6066;
+  --border: #d9d9d3;
+  --accent: #2f64d6;
+  --accent-soft: #e3ebfb;
+  --docker: #1d63ed;
+  --ok: #1d7a3a;
+  --ok-soft: #dff1e4;
+  --warn: #a75a00;
+  --warn-soft: #fbecd7;
+  --err: #b42318;
+  --err-soft: #fbe2df;
+  --code-bg: #f1f1ed;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.04);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141517;
+    --surface: #1c1d20;
+    --surface-2: #24262a;
+    --text: #e9e9ea;
+    --muted: #a0a3a9;
+    --border: #34363b;
+    --accent: #7ea6ff;
+    --accent-soft: #1f2b45;
+    --docker: #6f9dff;
+    --ok: #5cc27b;
+    --ok-soft: #173222;
+    --warn: #f0a94b;
+    --warn-soft: #3a2a14;
+    --err: #ff8a7d;
+    --err-soft: #3d1c19;
+    --code-bg: #24262a;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #141517;
+  --surface: #1c1d20;
+  --surface-2: #24262a;
+  --text: #e9e9ea;
+  --muted: #a0a3a9;
+  --border: #34363b;
+  --accent: #7ea6ff;
+  --accent-soft: #1f2b45;
+  --docker: #6f9dff;
+  --ok: #5cc27b;
+  --ok-soft: #173222;
+  --warn: #f0a94b;
+  --warn-soft: #3a2a14;
+  --err: #ff8a7d;
+  --err-soft: #3d1c19;
+  --code-bg: #24262a;
+  --shadow: none;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 16px 80px;
+}
+
+.crumbs {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.crumbs a {
+  color: var(--muted);
+}
+
+h1 {
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 720px;
+  margin: 0 0 40px;
+}
+
+h2 {
+  font-size: 24px;
+  margin: 56px 0 8px;
+  letter-spacing: -0.01em;
+}
+
+h2 + p {
+  margin-top: 0;
+  color: var(--muted);
+  max-width: 720px;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 0 0 6px;
+}
+
+a {
+  color: var(--accent);
+}
+
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+code {
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+  gap: 16px;
+}
+
+.note {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 16px 0;
+}
+
+.note.warn {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.note.ok {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.note.err {
+  border-color: var(--err);
+  background: var(--err-soft);
+}
+
+/* diagramy */
+.diagram {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.diagram text {
+  fill: var(--text);
+  font-family: inherit;
+}
+
+.diagram .muted {
+  fill: var(--muted);
+}
+
+.diagram .box {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.diagram .zone {
+  fill: var(--surface-2);
+  stroke: var(--border);
+  stroke-dasharray: 5 4;
+}
+
+.diagram .line {
+  stroke: var(--muted);
+  stroke-width: 1.6;
+  fill: none;
+}
+
+.diagram .arrowhead {
+  fill: var(--muted);
+}
+
+.diagram .step {
+  transition: opacity 0.25s;
+}
+
+.diagram.stepping .step {
+  opacity: 0.28;
+}
+
+.diagram.stepping .step.on {
+  opacity: 1;
+}
+
+.diagram.stepping .step.on .box {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  fill: var(--accent-soft);
+}
+
+.diagram.stepping .step.on .line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.diagram.stepping .step.on .arrowhead {
+  fill: var(--accent);
+}
+
+.diagram.stepping .step.done {
+  opacity: 0.75;
+}
+
+/* sterowanie krokami */
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+button {
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+}
+
+button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.counter {
+  color: var(--muted);
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.explain {
+  margin-top: 12px;
+  min-height: 96px;
+}
+
+.explain h3 {
+  color: var(--accent);
+}
+
+.explain p {
+  margin: 4px 0;
+}
+
+/* tabele */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.tag.ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.tag.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.tag.err {
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+footer {
+  margin-top: 64px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* szerokie diagramy przewijają się w ramce, a nie całą stroną */
+.scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll > svg {
+  min-width: 760px;
+}
+
+/* chipy podów w animacji rolling update */
+.rs-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.rs-label {
+  width: 210px;
+  flex: none;
+  font-size: 14px;
+}
+
+.rs-label code {
+  font-size: 13px;
+}
+
+.pods {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 40px;
+}
+
+.pod {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  min-width: 92px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.pod.ready {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.pod.starting {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-style: dashed;
+}
+
+.pod.failing {
+  border-color: var(--err);
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+.pod.terminating {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.meter {
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+/* tekst w diagramach */
+.diagram .t {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.diagram .s {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .lbl {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .dashed {
+  stroke-dasharray: 5 4;
+}
+</style>
+<style>
+  .diagram .layer {
+    fill: var(--surface);
+    stroke: var(--border);
+    stroke-width: 1.5;
+  }
+
+  .diagram .layer.base {
+    fill: var(--surface-2);
+  }
+
+  .diagram .rw {
+    fill: var(--warn-soft);
+    stroke: var(--warn);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+  }
+
+  .diagram .vol {
+    fill: var(--ok-soft);
+    stroke: var(--ok);
+    stroke-width: 1.5;
+  }
+
+  .diagram .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+  }
+
+  .build-cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .build-cols h3 {
+    margin-bottom: 10px;
+  }
+
+  .bstep {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    background: var(--surface);
+  }
+
+  .bstep .tag {
+    flex: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-width: 92px;
+    text-align: center;
+  }
+
+  .bstep.heavy {
+    font-weight: 700;
+  }
+
+  .summary {
+    margin-top: 10px;
+    font-size: 15px;
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="crumbs"><a href="README.md">docs</a> / Obraz i warstwy</div>
+  <h1>Obraz Dockera: warstwy, cache i multi-stage</h1>
+  <p class="lead">Dlaczego kolejność linii w Dockerfile ma znaczenie, gdzie kontener zapisuje pliki i jak zrobić mały obraz z języka kompilowanego. Przykłady pochodzą z <code>app/todos/api</code> i lab03.</p>
+
+  <!-- 1. WARSTWY -->
+  <h2>1. Obraz to stos warstw tylko do odczytu</h2>
+  <p>Każda instrukcja, która zmienia pliki (<code>COPY</code>, <code>RUN</code>), dokłada warstwę. Kontener dostaje na wierzchu własną, cienką warstwę do zapisu.</p>
+
+  <div class="card">
+    <div class="scroll">
+      <svg class="diagram" viewBox="0 0 1000 380" role="img" aria-label="Warstwy obrazu todos-api, dwa kontenery z własnymi warstwami zapisu i wolumen">
+        <text class="lbl" x="20" y="24">obraz todos-api:1.0 (wspólny dla wszystkich kontenerów)</text>
+
+        <rect class="layer base" x="20" y="300" width="520" height="56" rx="6"/>
+        <text class="t" x="36" y="323">FROM node:22-alpine</text>
+        <text class="s" x="36" y="343">kilka warstw obrazu bazowego: Alpine Linux i Node.js</text>
+
+        <rect class="layer" x="20" y="250" width="520" height="42" rx="6"/>
+        <text class="mono" x="36" y="276">WORKDIR /app</text>
+        <text class="s" x="524" y="276" text-anchor="end">pusty katalog</text>
+
+        <rect class="layer" x="20" y="200" width="520" height="42" rx="6"/>
+        <text class="mono" x="36" y="226">COPY package*.json ./</text>
+        <text class="s" x="524" y="226" text-anchor="end">lista zależności</text>
+
+        <rect class="layer" x="20" y="150" width="520" height="42" rx="6"/>
+        <text class="mono" x="36" y="176">RUN npm ci --omit=dev</text>
+        <text class="s" x="524" y="176" text-anchor="end">node_modules: największa warstwa</text>
+
+        <rect class="layer" x="20" y="100" width="520" height="42" rx="6"/>
+        <text class="mono" x="36" y="126">COPY server.js ./</text>
+        <text class="s" x="524" y="126" text-anchor="end">Twój kod: zmienia się najczęściej</text>
+
+        <text class="s" x="20" y="80">ENV, EXPOSE, USER, CMD → tylko metadane, bez nowej warstwy</text>
+
+        <!-- kontenery -->
+        <path class="line" d="M540 121 H600"/>
+        <text class="lbl" x="610" y="24">docker run × 2</text>
+
+        <rect class="rw" x="610" y="40" width="170" height="50" rx="6"/>
+        <text class="t" x="695" y="62" text-anchor="middle">warstwa zapisu</text>
+        <text class="s" x="695" y="80" text-anchor="middle">kontener 1</text>
+        <rect class="rw" x="800" y="40" width="170" height="50" rx="6"/>
+        <text class="t" x="885" y="62" text-anchor="middle">warstwa zapisu</text>
+        <text class="s" x="885" y="80" text-anchor="middle">kontener 2</text>
+        <path class="line" d="M695 90 V121 H600 M885 90 V121 H695"/>
+        <text class="lbl" x="610" y="146">oba widzą te same warstwy obrazu,</text>
+        <text class="lbl" x="610" y="164">każdy pisze tylko do swojej</text>
+
+        <rect class="vol" x="800" y="250" width="170" height="56" rx="6"/>
+        <text class="t" x="885" y="274" text-anchor="middle">wolumen</text>
+        <text class="s" x="885" y="293" text-anchor="middle">poza kontenerem</text>
+        <path class="line dashed" d="M885 90 V241"/>
+        <polygon class="arrowhead" points="885,250 880,241 890,241"/>
+        <text class="lbl" x="875" y="214" text-anchor="end">-v dane:/data</text>
+      </svg>
+    </div>
+    <div class="grid-2" style="margin-top:12px">
+      <div class="note warn" style="margin:0"><strong>Warstwa zapisu znika z kontenerem.</strong> <code>docker rm</code> usuwa wszystko, co kontener zapisał poza wolumenem.</div>
+      <div class="note ok" style="margin:0"><strong>Wolumen żyje osobno.</strong> Nowy kontener z tym samym <code>-v</code> widzi te same dane. Tak działa baza w lab02 i lab04.</div>
+    </div>
+  </div>
+
+  <!-- 2. CACHE -->
+  <h2>2. Cache: zmiana jednej warstwy przebudowuje wszystkie nad nią</h2>
+  <p>Docker sprawdza warstwy od góry Dockerfile. Pierwsza zmieniona warstwa i wszystkie po niej budują się od nowa. Wybierz, co zmieniasz, i porównaj dwa Dockerfile.</p>
+
+  <div class="card" id="cache">
+    <div class="stepper" style="margin-top:0" role="group" aria-label="Co zmieniasz">
+      <button data-change="code" aria-pressed="true">Zmieniam server.js</button>
+      <button data-change="pkg" aria-pressed="false">Dodaję zależność do package.json</button>
+      <button data-change="none" aria-pressed="false">Nic nie zmieniam</button>
+    </div>
+    <div class="build-cols">
+      <div>
+        <h3>Dobrze: najpierw zależności</h3>
+        <div data-build="good"></div>
+        <div class="summary" data-sum="good"></div>
+      </div>
+      <div>
+        <h3>Źle: cały kod naraz</h3>
+        <div data-build="bad"></div>
+        <div class="summary" data-sum="bad"></div>
+      </div>
+    </div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:0">
+      <span class="tag ok">CACHED</span> użyta gotowa warstwa ·
+      <span class="tag warn">buduje od nowa</span> warstwa wykonana ponownie
+    </p>
+  </div>
+
+  <div class="note">
+    Do kompletu <strong><code>.dockerignore</code></strong> z <code>node_modules</code> i <code>.git</code>. Bez niego <code>COPY . .</code> kopiuje też lokalne śmieci, a każda ich zmiana unieważnia cache.
+  </div>
+
+  <!-- 3. MULTI-STAGE -->
+  <h2>3. Multi-stage: buduj w jednym obrazie, uruchamiaj w drugim</h2>
+  <p>Kompilator i kod źródłowy są potrzebne tylko do zbudowania programu. Do obrazu końcowego trafia sam plik wykonywalny. Przykład z lab03 (Go).</p>
+
+  <div class="card">
+    <div class="scroll">
+      <svg class="diagram" viewBox="0 0 1000 300" role="img" aria-label="Etap build z obrazem golang kompiluje program, do obrazu końcowego distroless trafia tylko plik wykonywalny">
+        <rect class="zone" x="10" y="20" width="400" height="260" rx="12"/>
+        <text class="side t" x="26" y="46">Etap 1: build</text>
+        <text class="mono" x="26" y="72">FROM golang:1.25 AS build</text>
+
+        <rect class="layer base" x="30" y="90" width="360" height="44" rx="6"/>
+        <text class="t" x="46" y="117">kompilator Go i narzędzia</text>
+        <text class="s" x="374" y="117" text-anchor="end">setki MB</text>
+        <rect class="layer" x="30" y="142" width="360" height="44" rx="6"/>
+        <text class="mono" x="46" y="169">COPY . .</text>
+        <text class="s" x="374" y="169" text-anchor="end">kod źródłowy</text>
+        <rect class="layer" x="30" y="194" width="360" height="44" rx="6" style="stroke:var(--accent);stroke-width:2.5"/>
+        <text class="mono" x="46" y="221">RUN go build -o /hello</text>
+        <text class="s" x="374" y="221" text-anchor="end">gotowy program</text>
+        <text class="lbl" x="26" y="264">ten etap nie trafia do obrazu końcowego</text>
+
+        <path class="line" d="M390 216 H581" style="stroke:var(--accent);stroke-width:2.5"/>
+        <polygon points="590,216 581,211 581,221" style="fill:var(--accent)"/>
+        <text class="lbl" x="490" y="204" text-anchor="middle">COPY --from=build</text>
+        <text class="lbl" x="490" y="238" text-anchor="middle">/hello /hello</text>
+
+        <rect class="zone" x="590" y="20" width="400" height="260" rx="12" style="stroke:var(--ok)"/>
+        <text class="side t" x="606" y="46">Etap 2: obraz końcowy</text>
+        <text class="mono" x="606" y="72">FROM gcr.io/distroless/static-debian12</text>
+
+        <rect class="layer base" x="610" y="142" width="360" height="44" rx="6"/>
+        <text class="t" x="626" y="169">minimalny system, bez powłoki</text>
+        <text class="s" x="954" y="169" text-anchor="end">kilka MB</text>
+        <rect class="layer" x="610" y="194" width="360" height="44" rx="6" style="stroke:var(--accent);stroke-width:2.5"/>
+        <text class="mono" x="626" y="221">/hello</text>
+        <text class="s" x="954" y="221" text-anchor="end">tylko program</text>
+        <text class="lbl" x="606" y="264">USER nonroot · CMD ["/hello"]</text>
+      </svg>
+    </div>
+    <div class="grid-2" style="margin-top:12px">
+      <div><h3>Co zyskujesz</h3><p style="margin:0">Mniejszy obraz, więc szybsze pobieranie na węzły. Mniej programów w środku, więc mniej podatności do łatania. Brak kodu źródłowego w obrazie produkcyjnym.</p></div>
+      <div><h3>Kiedy się przydaje</h3><p style="margin:0">Języki kompilowane (Go, Java, C#, C) i frontendy budowane do plików statycznych (<code>npm run build</code> → nginx). Dla Node.js bez kroku budowania wystarczy jeden etap jak w ToDos API.</p></div>
+    </div>
+  </div>
+
+  <h2>Jak to zobaczyć u siebie</h2>
+  <p>Polecenia do lab03.</p>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Chcesz zobaczyć</th><th>Polecenie</th></tr>
+      <tr><td>warstwy obrazu i ich rozmiary</td><td><code>docker history todos-api:1.0</code></td></tr>
+      <tr><td>które kroki wzięły się z cache</td><td><code>docker build --progress=plain -t todos-api:1.0 .</code> i szukaj <code>CACHED</code></td></tr>
+      <tr><td>porównanie rozmiarów obrazów</td><td><code>docker image ls</code></td></tr>
+      <tr><td>co kontener zmienił w swojej warstwie</td><td><code>docker diff &lt;kontener&gt;</code></td></tr>
+      <tr><td>budowanie bez cache</td><td><code>docker build --no-cache -t …</code></td></tr>
+    </table>
+  </div>
+
+  <footer>Inne strony: <a href="compose-vs-k8s.html">Compose a Kubernetes</a> · <a href="k8s-droga-zapytania.html">droga zapytania</a> · <a href="diagnostyka-poda.html">diagnostyka poda</a> · <a href="docker.md">ściąga Docker</a></footer>
+</main>
+
+<script>
+(function () {
+  // dep: od czego zależy warstwa (pkg = package*.json, code = server.js)
+  var files = {
+    good: [
+      { l: "FROM node:22-alpine", dep: [] },
+      { l: "WORKDIR /app", dep: [] },
+      { l: "COPY package*.json ./", dep: ["pkg"] },
+      { l: "RUN npm ci --omit=dev", dep: [], heavy: true },
+      { l: "COPY server.js ./", dep: ["code"] },
+      { l: "CMD [\"node\", \"server.js\"]", dep: [] }
+    ],
+    bad: [
+      { l: "FROM node:22-alpine", dep: [] },
+      { l: "WORKDIR /app", dep: [] },
+      { l: "COPY . .", dep: ["pkg", "code"] },
+      { l: "RUN npm ci --omit=dev", dep: [], heavy: true },
+      { l: "CMD [\"node\", \"server.js\"]", dep: [] }
+    ]
+  };
+  var root = document.getElementById("cache");
+
+  function render(change) {
+    Object.keys(files).forEach(function (k) {
+      var broken = false, rebuilt = 0, npm = false;
+      var html = files[k].map(function (s) {
+        if (s.dep.indexOf(change) !== -1) broken = true;
+        if (broken) {
+          rebuilt++;
+          if (s.heavy) npm = true;
+        }
+        return "<div class='bstep" + (s.heavy ? " heavy" : "") + "'>" +
+          (broken ? "<span class='tag warn'>buduje od nowa</span>" : "<span class='tag ok'>CACHED</span>") +
+          "<span>" + s.l.replace(/</g, "&lt;") + "</span></div>";
+      }).join("");
+      root.querySelector('[data-build="' + k + '"]').innerHTML = html;
+      var sum = rebuilt === 0
+        ? "Wszystko z cache, build trwa chwilę."
+        : npm
+          ? "<strong>npm ci</strong> wykonuje się od nowa: zależności pobierane są jeszcze raz."
+          : "<strong>npm ci</strong> z cache, przebudowany tylko kod.";
+      root.querySelector('[data-sum="' + k + '"]').innerHTML = sum;
+    });
+    root.querySelectorAll("[data-change]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-change") === change));
+    });
+  }
+
+  root.querySelectorAll("[data-change]").forEach(function (b) {
+    b.addEventListener("click", function () { render(b.getAttribute("data-change")); });
+  });
+  render("code");
+})();
+</script>
+</body>
+</html>

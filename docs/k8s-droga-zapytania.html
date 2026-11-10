@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kubernetes: droga zapytania</title>
+<style>
+/* Wspólny styl stron w docs/. Działa offline, bez zewnętrznych czcionek i bibliotek. */
+:root {
+  --bg: #f6f6f3;
+  --surface: #ffffff;
+  --surface-2: #f0f0ec;
+  --text: #1c1c1e;
+  --muted: #5d6066;
+  --border: #d9d9d3;
+  --accent: #2f64d6;
+  --accent-soft: #e3ebfb;
+  --docker: #1d63ed;
+  --ok: #1d7a3a;
+  --ok-soft: #dff1e4;
+  --warn: #a75a00;
+  --warn-soft: #fbecd7;
+  --err: #b42318;
+  --err-soft: #fbe2df;
+  --code-bg: #f1f1ed;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.04);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141517;
+    --surface: #1c1d20;
+    --surface-2: #24262a;
+    --text: #e9e9ea;
+    --muted: #a0a3a9;
+    --border: #34363b;
+    --accent: #7ea6ff;
+    --accent-soft: #1f2b45;
+    --docker: #6f9dff;
+    --ok: #5cc27b;
+    --ok-soft: #173222;
+    --warn: #f0a94b;
+    --warn-soft: #3a2a14;
+    --err: #ff8a7d;
+    --err-soft: #3d1c19;
+    --code-bg: #24262a;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #141517;
+  --surface: #1c1d20;
+  --surface-2: #24262a;
+  --text: #e9e9ea;
+  --muted: #a0a3a9;
+  --border: #34363b;
+  --accent: #7ea6ff;
+  --accent-soft: #1f2b45;
+  --docker: #6f9dff;
+  --ok: #5cc27b;
+  --ok-soft: #173222;
+  --warn: #f0a94b;
+  --warn-soft: #3a2a14;
+  --err: #ff8a7d;
+  --err-soft: #3d1c19;
+  --code-bg: #24262a;
+  --shadow: none;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 16px 80px;
+}
+
+.crumbs {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.crumbs a {
+  color: var(--muted);
+}
+
+h1 {
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 720px;
+  margin: 0 0 40px;
+}
+
+h2 {
+  font-size: 24px;
+  margin: 56px 0 8px;
+  letter-spacing: -0.01em;
+}
+
+h2 + p {
+  margin-top: 0;
+  color: var(--muted);
+  max-width: 720px;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 0 0 6px;
+}
+
+a {
+  color: var(--accent);
+}
+
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+code {
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+  gap: 16px;
+}
+
+.note {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 16px 0;
+}
+
+.note.warn {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.note.ok {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.note.err {
+  border-color: var(--err);
+  background: var(--err-soft);
+}
+
+/* diagramy */
+.diagram {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.diagram text {
+  fill: var(--text);
+  font-family: inherit;
+}
+
+.diagram .muted {
+  fill: var(--muted);
+}
+
+.diagram .box {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.diagram .zone {
+  fill: var(--surface-2);
+  stroke: var(--border);
+  stroke-dasharray: 5 4;
+}
+
+.diagram .line {
+  stroke: var(--muted);
+  stroke-width: 1.6;
+  fill: none;
+}
+
+.diagram .arrowhead {
+  fill: var(--muted);
+}
+
+.diagram .step {
+  transition: opacity 0.25s;
+}
+
+.diagram.stepping .step {
+  opacity: 0.28;
+}
+
+.diagram.stepping .step.on {
+  opacity: 1;
+}
+
+.diagram.stepping .step.on .box {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  fill: var(--accent-soft);
+}
+
+.diagram.stepping .step.on .line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.diagram.stepping .step.on .arrowhead {
+  fill: var(--accent);
+}
+
+.diagram.stepping .step.done {
+  opacity: 0.75;
+}
+
+/* sterowanie krokami */
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+button {
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+}
+
+button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.counter {
+  color: var(--muted);
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.explain {
+  margin-top: 12px;
+  min-height: 96px;
+}
+
+.explain h3 {
+  color: var(--accent);
+}
+
+.explain p {
+  margin: 4px 0;
+}
+
+/* tabele */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.tag.ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.tag.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.tag.err {
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+footer {
+  margin-top: 64px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* szerokie diagramy przewijają się w ramce, a nie całą stroną */
+.scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll > svg {
+  min-width: 760px;
+}
+
+/* chipy podów w animacji rolling update */
+.rs-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.rs-label {
+  width: 210px;
+  flex: none;
+  font-size: 14px;
+}
+
+.rs-label code {
+  font-size: 13px;
+}
+
+.pods {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 40px;
+}
+
+.pod {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  min-width: 92px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.pod.ready {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.pod.starting {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-style: dashed;
+}
+
+.pod.failing {
+  border-color: var(--err);
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+.pod.terminating {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.meter {
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+/* tekst w diagramach */
+.diagram .t {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.diagram .s {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .lbl {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .dashed {
+  stroke-dasharray: 5 4;
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="crumbs"><a href="README.md">docs</a> / Kubernetes: droga zapytania</div>
+  <h1>Kubernetes: droga zapytania i skąd biorą się pody</h1>
+  <p class="lead">Trzy diagramy na przykładzie ToDos z lab09: którędy idzie zapytanie z przeglądarki do bazy, co się dzieje po <code>kubectl apply</code> i jak Deployment podmienia pody przy nowej wersji. Każdy diagram przejdziesz krok po kroku przyciskiem albo strzałkami na klawiaturze.</p>
+
+  <!-- 1. DROGA ZAPYTANIA -->
+  <h2>1. Od przeglądarki do bazy</h2>
+  <p>Wpisujesz <code>http://todos.localhost</code>, a lista zadań przychodzi z MongoDB w podzie. Po drodze jest sześć obiektów Kubernetesa.</p>
+
+  <div class="card" data-kroki tabindex="0">
+    <div class="scroll">
+      <svg class="diagram" viewBox="0 0 1000 450" role="img" aria-label="Droga zapytania: przeglądarka, Traefik, Ingress, Service web, EndpointSlice, pody web, Service api, pody api, Service mongo, pod mongo, PVC">
+        <rect class="zone" x="10" y="20" width="165" height="410" rx="12"/>
+        <text class="lbl" x="24" y="44">Laptop</text>
+        <rect class="zone" x="190" y="20" width="800" height="410" rx="12"/>
+        <text class="lbl" x="204" y="44">Klaster kind</text>
+
+        <g class="step" data-step="1">
+          <rect class="box" x="25" y="70" width="135" height="60" rx="8"/>
+          <text class="t" x="92.5" y="95" text-anchor="middle">Przeglądarka</text>
+          <text class="s" x="92.5" y="114" text-anchor="middle">todos.localhost</text>
+          <path class="line" d="M160 100 H201"/>
+          <polygon class="arrowhead" points="210,100 201,95 201,105"/>
+          <text class="lbl" x="185" y="90" text-anchor="middle">:80</text>
+        </g>
+
+        <g class="step" data-step="2">
+          <rect class="box" x="210" y="70" width="150" height="60" rx="8"/>
+          <text class="t" x="285" y="95" text-anchor="middle">Traefik</text>
+          <text class="s" x="285" y="114" text-anchor="middle">Ingress Controller</text>
+          <path class="line dashed" d="M285 130 V160"/>
+          <text class="lbl" x="295" y="150">czyta reguły</text>
+          <rect class="box dashed" x="210" y="160" width="150" height="56" rx="8"/>
+          <text class="t" x="285" y="184" text-anchor="middle">Ingress todos</text>
+          <text class="s" x="285" y="203" text-anchor="middle">host → Service web</text>
+        </g>
+
+        <g class="step" data-step="3">
+          <path class="line" d="M360 100 H391"/>
+          <polygon class="arrowhead" points="400,100 391,95 391,105"/>
+          <rect class="box" x="400" y="70" width="150" height="60" rx="8"/>
+          <text class="t" x="475" y="95" text-anchor="middle">Service web</text>
+          <text class="s" x="475" y="114" text-anchor="middle">port 80 → 8080</text>
+        </g>
+
+        <g class="step" data-step="4">
+          <path class="line" d="M550 100 H581"/>
+          <polygon class="arrowhead" points="590,100 581,95 581,105"/>
+          <rect class="box" x="590" y="70" width="170" height="60" rx="8"/>
+          <text class="t" x="675" y="95" text-anchor="middle">EndpointSlice</text>
+          <text class="s" x="675" y="114" text-anchor="middle">IP gotowych podów</text>
+        </g>
+
+        <g class="step" data-step="5">
+          <path class="line" d="M760 100 H780 V75 H791 M780 100 V125 H791"/>
+          <polygon class="arrowhead" points="800,75 791,70 791,80"/>
+          <polygon class="arrowhead" points="800,125 791,120 791,130"/>
+          <rect class="box" x="800" y="55" width="170" height="40" rx="8"/>
+          <text class="t" x="885" y="80" text-anchor="middle">Pod web · :8080</text>
+          <rect class="box" x="800" y="105" width="170" height="40" rx="8"/>
+          <text class="t" x="885" y="130" text-anchor="middle">Pod web · :8080</text>
+        </g>
+
+        <g class="step" data-step="6">
+          <path class="line" d="M885 145 V241"/>
+          <polygon class="arrowhead" points="885,250 880,241 890,241"/>
+          <text class="lbl" x="875" y="190" text-anchor="end">nginx: /api/ →</text>
+          <text class="lbl" x="875" y="206" text-anchor="end">http://api:3000</text>
+          <rect class="box" x="800" y="250" width="170" height="60" rx="8"/>
+          <text class="t" x="885" y="275" text-anchor="middle">Service api</text>
+          <text class="s" x="885" y="294" text-anchor="middle">port 3000</text>
+          <path class="line" d="M800 280 H780 V255 H769 M780 280 V305 H769"/>
+          <polygon class="arrowhead" points="760,255 769,250 769,260"/>
+          <polygon class="arrowhead" points="760,305 769,300 769,310"/>
+          <rect class="box" x="590" y="235" width="170" height="40" rx="8"/>
+          <text class="t" x="675" y="260" text-anchor="middle">Pod api · :3000</text>
+          <rect class="box" x="590" y="285" width="170" height="40" rx="8"/>
+          <text class="t" x="675" y="310" text-anchor="middle">Pod api · :3000</text>
+        </g>
+
+        <g class="step" data-step="7">
+          <path class="line" d="M590 280 H559"/>
+          <polygon class="arrowhead" points="550,280 559,275 559,285"/>
+          <rect class="box" x="400" y="250" width="150" height="60" rx="8"/>
+          <text class="t" x="475" y="275" text-anchor="middle">Service mongo</text>
+          <text class="s" x="475" y="294" text-anchor="middle">port 27017</text>
+          <path class="line" d="M400 280 H369"/>
+          <polygon class="arrowhead" points="360,280 369,275 369,285"/>
+          <rect class="box" x="210" y="250" width="150" height="60" rx="8"/>
+          <text class="t" x="285" y="275" text-anchor="middle">Pod mongo</text>
+          <text class="s" x="285" y="294" text-anchor="middle">mongo:7.0</text>
+        </g>
+
+        <g class="step" data-step="8">
+          <path class="line" d="M285 310 V351"/>
+          <polygon class="arrowhead" points="285,360 280,351 290,351"/>
+          <rect class="box" x="210" y="360" width="150" height="56" rx="8"/>
+          <text class="t" x="285" y="384" text-anchor="middle">PVC mongo-data</text>
+          <text class="s" x="285" y="403" text-anchor="middle">dysk 1 GiB</text>
+        </g>
+      </svg>
+    </div>
+    <div class="stepper">
+      <button data-prev>◀ Wstecz</button>
+      <button class="primary" data-next>Start ▶</button>
+      <button data-all>Całość</button>
+      <span class="counter"></span>
+    </div>
+    <div class="explain">
+      <p>Najpierw spójrz na całość: zapytanie idzie górnym rzędem w prawo, potem dolnym w lewo, aż do dysku. Kliknij <strong>Start</strong>, żeby przejść po kolei.</p>
+    </div>
+    <div hidden data-opisy>
+      <section data-title="Przeglądarka i port 80">
+        <p>Nazwy <code>*.localhost</code> zawsze wskazują na Twój komputer (127.0.0.1). Port 80 laptopa jest przekierowany do węzła klastra kind. To ustawienie <code>extraPortMappings</code> w <code>setup/kind-config.yaml</code>.</p>
+      </section>
+      <section data-title="Traefik czyta Ingress">
+        <p>Traefik to <strong>Ingress Controller</strong>, czyli zwykła aplikacja w podzie, która przyjmuje ruch z zewnątrz. Sam obiekt <strong>Ingress</strong> to tylko reguła: „host <code>todos.localhost</code>, ścieżka <code>/</code> → Service <code>web</code>, port 80”. Bez kontrolera Ingress nic nie robi.</p>
+      </section>
+      <section data-title="Service web: stały adres">
+        <p>Pody mają zmienne IP: znikają i wracają z nowymi. Service daje stały adres (ClusterIP) i nazwę w DNS klastra. Które pody są „jego”, decyduje <code>selector: app: web</code>. Tutaj Service przyjmuje port 80 i kieruje na <code>targetPort: 8080</code> kontenera.</p>
+      </section>
+      <section data-title="EndpointSlice: lista gotowych podów">
+        <p>Kubernetes sam utrzymuje listę IP podów, które pasują do selektora <strong>i są Ready</strong>. Pod, który nie przechodzi <code>readinessProbe</code>, wypada z listy i nie dostaje ruchu.</p>
+        <p>Pusta lista = Service bez ruchu. Najczęściej selektor nie pasuje do etykiet podów: <code>kubectl get endpointslices -l kubernetes.io/service-name=web</code>.</p>
+      </section>
+      <section data-title="Pod web: nginx">
+        <p>Ruch trafia do jednego z dwóch podów web. nginx zwraca stronę <code>index.html</code>. Zapytania pod <code>/api/</code> przekazuje dalej, więc przeglądarka zna tylko jeden adres.</p>
+      </section>
+      <section data-title="DNS klastra: nazwa api">
+        <p>nginx ma w konfiguracji <code>proxy_pass http://api:3000</code>. Nazwa <code>api</code> to po prostu nazwa Service'u w tym samym namespace. Ten sam adres działał w Compose, bo tam <code>api</code> było nazwą usługi. Service rozkłada zapytania między dwa pody api.</p>
+      </section>
+      <section data-title="API łączy się z bazą">
+        <p>Pod api bierze adres bazy ze zmiennej <code>MONGO_URL=mongodb://mongo:27017</code> (z Secret <code>api-secret</code>). Znowu nazwa Service'u: <code>mongo</code>. Za nim jest jeden pod z MongoDB.</p>
+      </section>
+      <section data-title="PVC: dane przeżywają poda">
+        <p>MongoDB zapisuje dane w <code>/data/db</code>, a tam jest zamontowany <strong>PersistentVolumeClaim</strong>. Usuń poda mongo: Deployment stworzy nowego, podepnie ten sam dysk i zadania zostaną.</p>
+      </section>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Service nie jest pośrednikiem, przez który „przechodzi” ruch.</strong> To adres i nazwa. Ruch trafia prosto do IP poda z EndpointSlice. Dlatego gdy Service „nie działa”, sprawdzasz selektor, etykiety i gotowość podów, a nie sam Service.
+  </div>
+
+  <!-- 2. KUBECTL APPLY -->
+  <h2>2. Co się dzieje po <code>kubectl apply</code></h2>
+  <p>Od pliku YAML do działającego kontenera. Każdy element robi jedną rzecz i rozmawia tylko z API serverem.</p>
+
+  <div class="card" data-kroki tabindex="0">
+    <div class="scroll">
+      <svg class="diagram" viewBox="0 0 1000 330" role="img" aria-label="kubectl apply: API server i etcd, kontrolery tworzą ReplicaSet i pody, scheduler przydziela węzeł, kubelet uruchamia kontener">
+        <rect class="zone" x="195" y="14" width="235" height="306" rx="12"/>
+        <text class="lbl" x="209" y="36">Control plane</text>
+        <rect class="zone" x="450" y="14" width="210" height="306" rx="12"/>
+        <text class="lbl" x="464" y="36">Obiekty zapisane w API</text>
+        <rect class="zone" x="680" y="14" width="148" height="306" rx="12"/>
+        <text class="lbl" x="694" y="36">worker</text>
+        <rect class="zone" x="842" y="14" width="148" height="306" rx="12"/>
+        <text class="lbl" x="856" y="36">worker2</text>
+
+        <g class="step" data-step="1">
+          <rect class="box" x="25" y="48" width="135" height="50" rx="8"/>
+          <text class="t" x="92.5" y="70" text-anchor="middle">kubectl apply</text>
+          <text class="s" x="92.5" y="88" text-anchor="middle">-f 02-api.yaml</text>
+          <path class="line" d="M160 73 H206"/>
+          <polygon class="arrowhead" points="215,73 206,68 206,78"/>
+          <rect class="box" x="215" y="48" width="195" height="50" rx="8"/>
+          <text class="t" x="312.5" y="70" text-anchor="middle">API server</text>
+          <text class="s" x="312.5" y="88" text-anchor="middle">jedyne wejście do klastra</text>
+          <path class="line" d="M312.5 98 V109"/>
+          <polygon class="arrowhead" points="312.5,118 307.5,109 317.5,109"/>
+          <rect class="box" x="215" y="118" width="195" height="46" rx="8"/>
+          <text class="t" x="312.5" y="138" text-anchor="middle">etcd</text>
+          <text class="s" x="312.5" y="155" text-anchor="middle">zapisany stan klastra</text>
+        </g>
+
+        <g class="step" data-step="2 3">
+          <rect class="box" x="215" y="184" width="195" height="46" rx="8"/>
+          <text class="t" x="312.5" y="204" text-anchor="middle">Controller manager</text>
+          <text class="s" x="312.5" y="221" text-anchor="middle">pętle kontrolne</text>
+        </g>
+
+        <g class="step" data-step="1 2">
+          <rect class="box" x="470" y="48" width="170" height="50" rx="8"/>
+          <text class="t" x="555" y="70" text-anchor="middle">Deployment api</text>
+          <text class="s" x="555" y="88" text-anchor="middle">replicas: 2</text>
+        </g>
+
+        <g class="step" data-step="2">
+          <path class="line" d="M555 98 V119"/>
+          <polygon class="arrowhead" points="555,128 550,119 560,119"/>
+          <text class="lbl" x="565" y="117">tworzy</text>
+          <rect class="box" x="470" y="128" width="170" height="50" rx="8"/>
+          <text class="t" x="555" y="150" text-anchor="middle">ReplicaSet</text>
+          <text class="s" x="555" y="168" text-anchor="middle">api-7d4f9c8b6</text>
+        </g>
+
+        <g class="step" data-step="3">
+          <path class="line" d="M555 178 V193 H510 V199 M555 193 H600 V199"/>
+          <polygon class="arrowhead" points="510,208 505,199 515,199"/>
+          <polygon class="arrowhead" points="600,208 595,199 605,199"/>
+          <rect class="box" x="470" y="208" width="80" height="50" rx="8"/>
+          <text class="t" x="510" y="230" text-anchor="middle">Pod</text>
+          <text class="s" x="510" y="248" text-anchor="middle">Pending</text>
+          <rect class="box" x="560" y="208" width="80" height="50" rx="8"/>
+          <text class="t" x="600" y="230" text-anchor="middle">Pod</text>
+          <text class="s" x="600" y="248" text-anchor="middle">Pending</text>
+        </g>
+
+        <g class="step" data-step="4">
+          <rect class="box" x="215" y="250" width="195" height="46" rx="8"/>
+          <text class="t" x="312.5" y="270" text-anchor="middle">Scheduler</text>
+          <text class="s" x="312.5" y="287" text-anchor="middle">wybiera węzeł</text>
+          <path class="line" d="M410 282 H510 V267 M510 282 H600 V267"/>
+          <polygon class="arrowhead" points="510,258 505,267 515,267"/>
+          <polygon class="arrowhead" points="600,258 595,267 605,267"/>
+          <text class="lbl" x="420" y="300">nodeName: worker / worker2</text>
+        </g>
+
+        <g class="step" data-step="5">
+          <rect class="box" x="695" y="48" width="118" height="50" rx="8"/>
+          <text class="t" x="754" y="70" text-anchor="middle">kubelet</text>
+          <text class="s" x="754" y="88" text-anchor="middle">agent węzła</text>
+          <rect class="box" x="857" y="48" width="118" height="50" rx="8"/>
+          <text class="t" x="916" y="70" text-anchor="middle">kubelet</text>
+          <text class="s" x="916" y="88" text-anchor="middle">agent węzła</text>
+          <path class="line" d="M754 98 V199"/>
+          <polygon class="arrowhead" points="754,208 749,199 759,199"/>
+          <path class="line" d="M916 98 V199"/>
+          <polygon class="arrowhead" points="916,208 911,199 921,199"/>
+          <text class="lbl" x="762" y="158">uruchamia</text>
+          <text class="lbl" x="924" y="158">uruchamia</text>
+          <rect class="box" x="695" y="208" width="118" height="50" rx="8"/>
+          <text class="t" x="754" y="230" text-anchor="middle">kontener api</text>
+          <text class="s" x="754" y="248" text-anchor="middle">Running</text>
+          <rect class="box" x="857" y="208" width="118" height="50" rx="8"/>
+          <text class="t" x="916" y="230" text-anchor="middle">kontener api</text>
+          <text class="s" x="916" y="248" text-anchor="middle">Running</text>
+        </g>
+      </svg>
+    </div>
+    <div class="stepper">
+      <button data-prev>◀ Wstecz</button>
+      <button class="primary" data-next>Start ▶</button>
+      <button data-all>Całość</button>
+      <span class="counter"></span>
+    </div>
+    <div class="explain">
+      <p>Z lewej control plane, czyli „mózg” klastra. Pośrodku obiekty, które w nim zapisaliśmy. Z prawej węzły, na których naprawdę działają kontenery.</p>
+    </div>
+    <div hidden data-opisy>
+      <section data-title="kubectl → API server → etcd">
+        <p>kubectl wysyła manifest do API servera. Ten sprawdza składnię i uprawnienia, a potem zapisuje Deployment w etcd. Na tym rola kubectl się kończy. Reszta dzieje się w klastrze, nawet gdy zamkniesz laptopa.</p>
+      </section>
+      <section data-title="Deployment tworzy ReplicaSet">
+        <p>Kontroler Deploymentów widzi nowy Deployment i tworzy dla jego szablonu <strong>ReplicaSet</strong>. Końcówka nazwy to hash szablonu podów: każda zmiana w <code>template</code> (obraz, zmienne, zasoby) daje nowy ReplicaSet.</p>
+      </section>
+      <section data-title="ReplicaSet tworzy pody">
+        <p>Kontroler ReplicaSetów porównuje: chcę 2, mam 0, więc tworzy 2 pody. Na razie nie mają węzła, ich status to <code>Pending</code>.</p>
+      </section>
+      <section data-title="Scheduler wybiera węzeł">
+        <p>Scheduler szuka węzła dla każdego poda. Patrzy na <code>requests</code> (CPU, pamięć) i wolne zasoby, potem wpisuje węzeł do poda. Gdy żaden nie pasuje, pod zostaje w <code>Pending</code>, a przyczynę zobaczysz w Events: <code>kubectl describe pod</code>.</p>
+      </section>
+      <section data-title="kubelet uruchamia kontener">
+        <p>kubelet na węźle widzi przypisany pod, pobiera obraz i uruchamia kontener. Stan raportuje do API servera. Gdy <code>readinessProbe</code> przejdzie, pod jest Ready i trafia do EndpointSlice swojego Service'u.</p>
+      </section>
+    </div>
+  </div>
+
+  <div class="note ok">
+    <strong>Pętla kontrolna.</strong> Każdy kontroler w kółko porównuje stan zapisany z rzeczywistym i poprawia różnicę. Dlatego usunięty ręcznie pod wraca: ReplicaSet widzi 1 zamiast 2 i tworzy brakującego.
+  </div>
+
+  <!-- 3. ROLLING UPDATE -->
+  <h2>3. Rolling update: nowa wersja bez przerwy</h2>
+  <p><code>kubectl set image deploy/api api=todos-api:1.1</code> przy <code>replicas: 4</code> i domyślnej strategii: <code>maxSurge: 25%</code> (najwyżej 1 pod ponad plan) i <code>maxUnavailable: 25%</code> (najwyżej 1 pod mniej niż plan).</p>
+
+  <div class="card" id="rollout" tabindex="0">
+    <div class="stepper" style="margin-top:0">
+      <button data-scenario="ok" aria-pressed="true">Nowa wersja działa</button>
+      <button data-scenario="fail" aria-pressed="false">Nowa wersja nie przechodzi readinessProbe</button>
+    </div>
+    <div style="margin-top:12px">
+      <div class="rs-row">
+        <div class="rs-label"><strong>stary ReplicaSet</strong><br><code>todos-api:1.0</code></div>
+        <div class="pods" data-rs="old"></div>
+      </div>
+      <div class="rs-row">
+        <div class="rs-label"><strong>nowy ReplicaSet</strong><br><code>todos-api:1.1</code></div>
+        <div class="pods" data-rs="new"></div>
+      </div>
+    </div>
+    <div class="meter"></div>
+    <div class="stepper">
+      <button data-r-prev>◀ Wstecz</button>
+      <button class="primary" data-r-next>Dalej ▶</button>
+      <span class="counter"></span>
+    </div>
+    <div class="explain"></div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:0">
+      <span class="tag ok">Ready</span> dostaje ruch ·
+      <span class="tag warn">uruchamia się</span> czeka na readinessProbe ·
+      <span class="tag err">0/1 READY</span> sonda nie przechodzi ·
+      <span class="tag">kończy się</span> właśnie usuwany
+    </p>
+  </div>
+
+  <h2>Jak to zobaczyć u siebie</h2>
+  <p>Polecenia do lab08 i lab09.</p>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Chcesz zobaczyć</th><th>Polecenie</th></tr>
+      <tr><td>reguły Ingress</td><td><code>kubectl describe ingress todos</code></td></tr>
+      <tr><td>Service i gotowe pody za nim</td><td><code>kubectl get svc,endpointslices</code></td></tr>
+      <tr><td>Deployment → ReplicaSet → Pody</td><td><code>kubectl get deploy,rs,pods -l app=api</code></td></tr>
+      <tr><td>na którym węźle jest pod</td><td><code>kubectl get pods -o wide</code></td></tr>
+      <tr><td>DNS z wnętrza klastra</td><td><code>kubectl run klient --rm -it --image=busybox:1.37 -- wget -qO- http://api:3000/healthz</code></td></tr>
+      <tr><td>przebieg rolling update</td><td><code>kubectl rollout status deploy/api</code>, w drugim terminalu <code>kubectl get pods -w</code></td></tr>
+      <tr><td>cofnięcie wersji</td><td><code>kubectl rollout undo deploy/api</code></td></tr>
+    </table>
+  </div>
+
+  <footer>Inne strony: <a href="diagnostyka-poda.html">diagnostyka poda</a> · <a href="compose-vs-k8s.html">Compose a Kubernetes</a> · <a href="docker-obraz-i-warstwy.html">obraz i warstwy</a> · <a href="kubectl.md">ściąga kubectl</a></footer>
+</main>
+
+<script>
+// Diagram krok po kroku.
+// Struktura:  <div data-kroki> <svg class="diagram">…elementy z data-step="1 2"…</svg>
+//             <div class="stepper">[data-prev] [data-next] [data-all] .counter</div>
+//             <div class="explain"></div>
+//             <div hidden data-opisy><section data-title="…">treść</section>…</div> </div>
+// Krok 0 = widok całości. Strzałki ← → działają, gdy fokus jest w bloku.
+document.querySelectorAll("[data-kroki]").forEach(function (root) {
+  var svg = root.querySelector("svg.diagram");
+  var explain = root.querySelector(".explain");
+  var counter = root.querySelector(".counter");
+  var opisy = Array.prototype.slice.call(root.querySelectorAll("[data-opisy] > section"));
+  var elems = Array.prototype.slice.call(svg.querySelectorAll("[data-step]"));
+  var intro = explain.innerHTML;
+  var n = opisy.length;
+  var cur = 0;
+
+  function show(k) {
+    cur = Math.max(0, Math.min(n, k));
+    if (cur === 0) {
+      svg.classList.remove("stepping");
+      explain.innerHTML = intro;
+      counter.textContent = n + " kroków";
+    } else {
+      svg.classList.add("stepping");
+      elems.forEach(function (el) {
+        var steps = el.getAttribute("data-step").split(" ").map(Number);
+        var on = steps.indexOf(cur) !== -1;
+        var done = !on && Math.min.apply(null, steps) < cur;
+        el.classList.toggle("on", on);
+        el.classList.toggle("done", done);
+      });
+      var s = opisy[cur - 1];
+      explain.innerHTML = "<h3>" + cur + ". " + s.getAttribute("data-title") + "</h3>" + s.innerHTML;
+      counter.textContent = "krok " + cur + " z " + n;
+    }
+    root.querySelector("[data-prev]").disabled = cur === 0;
+    root.querySelector("[data-next]").textContent = cur === 0 ? "Start ▶" : cur === n ? "Od początku ↺" : "Dalej ▶";
+  }
+
+  root.querySelector("[data-next]").addEventListener("click", function () {
+    show(cur === n ? 1 : cur + 1);
+  });
+  root.querySelector("[data-prev]").addEventListener("click", function () {
+    show(cur - 1);
+  });
+  root.querySelector("[data-all]").addEventListener("click", function () {
+    show(0);
+  });
+  root.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight") {
+      show(cur === n ? n : cur + 1);
+      e.preventDefault();
+    }
+    if (e.key === "ArrowLeft") {
+      show(cur - 1);
+      e.preventDefault();
+    }
+  });
+  show(0);
+});
+</script>
+<script>
+// Rolling update: 4 repliki, maxSurge 1, maxUnavailable 1 (25% z 4).
+(function () {
+  var root = document.getElementById("rollout");
+  var R = "ready", S = "starting", F = "failing", T = "terminating";
+  var scenarios = {
+    ok: [
+      { old: [R, R, R, R], neu: [], t: "Stan wyjściowy", d: "Cztery pody w wersji 1.0, wszystkie Ready. Zmieniasz obraz w Deploymencie, więc zmienia się szablon i powstaje nowy, pusty ReplicaSet." },
+      { old: [R, R, R, T], neu: [S, S], t: "Pierwszy ruch", d: "Wolno mieć najwyżej 5 podów (4 + maxSurge) i najmniej 3 gotowe (4 − maxUnavailable). Deployment usuwa więc jeden stary pod i od razu startuje dwa nowe." },
+      { old: [R, T, T], neu: [R, R, S, S], t: "Nowe pody gotowe", d: "Dwa nowe pody przeszły readinessProbe i dostają ruch. Gotowych jest 5, więc można usunąć kolejne dwa stare i uruchomić dwa nowe." },
+      { old: [T], neu: [R, R, R, R], t: "Koniec", d: "Cztery pody w wersji 1.1. Stary ReplicaSet zostaje z zerem replik. To on jest „historią”, do której wraca <code>kubectl rollout undo</code>." }
+    ],
+    fail: [
+      { old: [R, R, R, R], neu: [], t: "Stan wyjściowy", d: "Cztery pody w wersji 1.0. Nowy obraz ma błąd: aplikacja startuje, ale <code>/readyz</code> nie odpowiada." },
+      { old: [R, R, R, T], neu: [S, S], t: "Pierwszy ruch", d: "Tak samo jak zwykle: jeden stary pod mniej, dwa nowe startują." },
+      { old: [R, R, R], neu: [F, F], t: "Rollout stoi", d: "Nowe pody nie są Ready, więc Deployment nie usunie więcej starych, bo spadłby poniżej 3 gotowych. Trzy stare pody dalej obsługują ruch. Użytkownicy nie widzą awarii, a <code>kubectl rollout status</code> czeka." },
+      { old: [R, R, R, S], neu: [T, T], t: "rollout undo", d: "<code>kubectl rollout undo deploy/api</code> przywraca szablon 1.0. Stary ReplicaSet wraca do 4 replik, nowy spada do zera. Przyczynę znajdziesz w <code>kubectl describe pod</code> → Events i w <code>kubectl logs</code>." }
+    ]
+  };
+  var labels = {};
+  labels[R] = "Ready";
+  labels[S] = "uruchamia się";
+  labels[F] = "0/1 READY";
+  labels[T] = "kończy się";
+  var sc = "ok", i = 0;
+
+  function chips(list) {
+    return list.map(function (st) {
+      return '<div class="pod ' + st + '">' + labels[st] + "</div>";
+    }).join("");
+  }
+
+  function render() {
+    var steps = scenarios[sc], s = steps[i];
+    root.querySelector('[data-rs="old"]').innerHTML = chips(s.old);
+    root.querySelector('[data-rs="new"]').innerHTML = chips(s.neu);
+    var ready = s.old.concat(s.neu).filter(function (x) { return x === R; }).length;
+    var all = s.old.concat(s.neu).filter(function (x) { return x !== T; }).length;
+    root.querySelector(".meter").innerHTML = "Gotowe do ruchu: <strong>" + ready + "</strong> (minimum 3) · pody bez kończących się: <strong>" + all + "</strong> (maksimum 5)";
+    root.querySelector(".explain").innerHTML = "<h3>" + (i + 1) + ". " + s.t + "</h3><p>" + s.d + "</p>";
+    root.querySelector(".counter").textContent = "krok " + (i + 1) + " z " + steps.length;
+    root.querySelector("[data-r-prev]").disabled = i === 0;
+    root.querySelector("[data-r-next]").textContent = i === steps.length - 1 ? "Od początku ↺" : "Dalej ▶";
+  }
+
+  root.querySelector("[data-r-next]").addEventListener("click", function () {
+    i = i === scenarios[sc].length - 1 ? 0 : i + 1;
+    render();
+  });
+  root.querySelector("[data-r-prev]").addEventListener("click", function () {
+    i = Math.max(0, i - 1);
+    render();
+  });
+  root.querySelectorAll("[data-scenario]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      sc = b.getAttribute("data-scenario");
+      i = 0;
+      root.querySelectorAll("[data-scenario]").forEach(function (x) {
+        x.setAttribute("aria-pressed", String(x === b));
+      });
+      render();
+    });
+  });
+  root.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight") { i = Math.min(scenarios[sc].length - 1, i + 1); render(); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { i = Math.max(0, i - 1); render(); e.preventDefault(); }
+  });
+  render();
+})();
+</script>
+</body>
+</html>
