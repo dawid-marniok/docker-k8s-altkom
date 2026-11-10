@@ -1,0 +1,1151 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rodzaje Service</title>
+<style>
+/* Wspólny styl stron w docs/. Działa offline, bez zewnętrznych czcionek i bibliotek. */
+:root {
+  --bg: #f6f6f3;
+  --surface: #ffffff;
+  --surface-2: #f0f0ec;
+  --text: #1c1c1e;
+  --muted: #5d6066;
+  --border: #d9d9d3;
+  --accent: #2f64d6;
+  --accent-soft: #e3ebfb;
+  --docker: #1d63ed;
+  --ok: #1d7a3a;
+  --ok-soft: #dff1e4;
+  --warn: #a75a00;
+  --warn-soft: #fbecd7;
+  --err: #b42318;
+  --err-soft: #fbe2df;
+  --code-bg: #f1f1ed;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.04);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141517;
+    --surface: #1c1d20;
+    --surface-2: #24262a;
+    --text: #e9e9ea;
+    --muted: #a0a3a9;
+    --border: #34363b;
+    --accent: #7ea6ff;
+    --accent-soft: #1f2b45;
+    --docker: #6f9dff;
+    --ok: #5cc27b;
+    --ok-soft: #173222;
+    --warn: #f0a94b;
+    --warn-soft: #3a2a14;
+    --err: #ff8a7d;
+    --err-soft: #3d1c19;
+    --code-bg: #24262a;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #141517;
+  --surface: #1c1d20;
+  --surface-2: #24262a;
+  --text: #e9e9ea;
+  --muted: #a0a3a9;
+  --border: #34363b;
+  --accent: #7ea6ff;
+  --accent-soft: #1f2b45;
+  --docker: #6f9dff;
+  --ok: #5cc27b;
+  --ok-soft: #173222;
+  --warn: #f0a94b;
+  --warn-soft: #3a2a14;
+  --err: #ff8a7d;
+  --err-soft: #3d1c19;
+  --code-bg: #24262a;
+  --shadow: none;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 16px 80px;
+}
+
+.crumbs {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.crumbs a {
+  color: var(--muted);
+}
+
+h1 {
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 720px;
+  margin: 0 0 40px;
+}
+
+h2 {
+  font-size: 24px;
+  margin: 56px 0 8px;
+  letter-spacing: -0.01em;
+}
+
+h2 + p {
+  margin-top: 0;
+  color: var(--muted);
+  max-width: 720px;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 0 0 6px;
+}
+
+a {
+  color: var(--accent);
+}
+
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+code {
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+  gap: 16px;
+}
+
+.note {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 16px 0;
+}
+
+.note.warn {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.note.ok {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.note.err {
+  border-color: var(--err);
+  background: var(--err-soft);
+}
+
+/* diagramy */
+.diagram {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.diagram text {
+  fill: var(--text);
+  font-family: inherit;
+}
+
+.diagram .muted {
+  fill: var(--muted);
+}
+
+.diagram .box {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.diagram .zone {
+  fill: var(--surface-2);
+  stroke: var(--border);
+  stroke-dasharray: 5 4;
+}
+
+.diagram .line {
+  stroke: var(--muted);
+  stroke-width: 1.6;
+  fill: none;
+}
+
+.diagram .arrowhead {
+  fill: var(--muted);
+}
+
+.diagram .step {
+  transition: opacity 0.25s;
+}
+
+.diagram.stepping .step {
+  opacity: 0.28;
+}
+
+.diagram.stepping .step.on {
+  opacity: 1;
+}
+
+.diagram.stepping .step.on .box {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  fill: var(--accent-soft);
+}
+
+.diagram.stepping .step.on .line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.diagram.stepping .step.on .arrowhead {
+  fill: var(--accent);
+}
+
+.diagram.stepping .step.done {
+  opacity: 0.75;
+}
+
+/* sterowanie krokami */
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+button {
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+}
+
+button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.counter {
+  color: var(--muted);
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.explain {
+  margin-top: 12px;
+  min-height: 96px;
+}
+
+.explain h3 {
+  color: var(--accent);
+}
+
+.explain p {
+  margin: 4px 0;
+}
+
+/* tabele */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.tag.ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.tag.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.tag.err {
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+footer {
+  margin-top: 64px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* szerokie diagramy przewijają się w ramce, a nie całą stroną */
+.scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll > svg {
+  min-width: 760px;
+}
+
+/* chipy podów w animacji rolling update */
+.rs-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.rs-label {
+  width: 210px;
+  flex: none;
+  font-size: 14px;
+}
+
+.rs-label code {
+  font-size: 13px;
+}
+
+.pods {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 40px;
+}
+
+.pod {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  min-width: 92px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.pod.ready {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.pod.starting {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-style: dashed;
+}
+
+.pod.failing {
+  border-color: var(--err);
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+.pod.terminating {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.meter {
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+/* tekst w diagramach */
+.diagram .t {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.diagram .s {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .lbl {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.diagram .dashed {
+  stroke-dasharray: 5 4;
+}
+</style>
+<style>
+  .diagram .flow {
+    fill: none;
+    stroke: none;
+  }
+
+  .diagram .packet {
+    fill: var(--accent);
+  }
+
+  .diagram .blocked {
+    stroke: var(--err);
+    stroke-width: 1.8;
+    stroke-dasharray: 5 4;
+    fill: none;
+  }
+
+  .diagram .xmark {
+    fill: var(--err);
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .diagram .svc {
+    fill: var(--accent-soft);
+    stroke: var(--accent);
+    stroke-width: 2;
+  }
+
+  .diagram .ext {
+    fill: var(--warn-soft);
+    stroke: var(--warn);
+    stroke-width: 1.5;
+  }
+
+  .diagram .nest-lb {
+    fill: var(--warn-soft);
+    stroke: var(--warn);
+    stroke-width: 1.5;
+  }
+
+  .diagram .nest-np {
+    fill: var(--ok-soft);
+    stroke: var(--ok);
+    stroke-width: 1.5;
+  }
+
+  .diagram .nest-ci {
+    fill: var(--accent-soft);
+    stroke: var(--accent);
+    stroke-width: 1.5;
+  }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .tabs button {
+    font-weight: 600;
+  }
+
+  .tabs button[aria-selected="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--surface);
+  }
+
+  .panel h3 {
+    font-size: 20px;
+    margin: 16px 0 4px;
+  }
+
+  .panel .sub {
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+
+  .panel h4 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 16px 0 6px;
+  }
+
+  .panel ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+
+  .panel li {
+    margin: 4px 0;
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="crumbs"><a href="README.md">docs</a> / Rodzaje Service</div>
+  <h1>Service w Kubernetesie: wszystkie rodzaje</h1>
+  <p class="lead">Pody przychodzą i odchodzą, a ich IP się zmieniają. Service daje im stały adres i nazwę. Rodzaj Service decyduje, <strong>skąd</strong> da się do tego adresu dojść: tylko z klastra, z sieci węzłów czy z internetu.</p>
+
+  <!-- ZAGNIEŻDŻENIE -->
+  <h2>Trzy podstawowe typy to warstwy</h2>
+  <p>Każdy kolejny typ dokłada coś do poprzedniego. LoadBalancer ma w sobie NodePort, a NodePort ma w sobie ClusterIP.</p>
+  <div class="card">
+    <div class="scroll">
+      <svg class="diagram" viewBox="0 0 1000 230" role="img" aria-label="LoadBalancer zawiera NodePort, który zawiera ClusterIP">
+        <rect class="nest-lb" x="10" y="10" width="980" height="210" rx="14"/>
+        <text class="t" x="30" y="38">LoadBalancer</text>
+        <text class="s" x="30" y="58">+ zewnętrzny adres IP</text>
+        <text class="s" x="30" y="74">od dostawcy chmury</text>
+        <rect class="nest-np" x="250" y="40" width="720" height="160" rx="12"/>
+        <text class="t" x="270" y="68">NodePort</text>
+        <text class="s" x="270" y="88">+ ten sam port</text>
+        <text class="s" x="270" y="104">na każdym węźle</text>
+        <text class="s" x="270" y="120">(30000–32767)</text>
+        <rect class="nest-ci" x="520" y="70" width="430" height="110" rx="10"/>
+        <text class="t" x="540" y="98">ClusterIP (domyślny)</text>
+        <text class="s" x="540" y="118">wewnętrzny IP i nazwa DNS w klastrze</text>
+        <text class="s" x="540" y="138">rozkłada ruch na pody z selektora</text>
+        <text class="s" x="540" y="158">jest w każdym z tych trzech typów</text>
+      </svg>
+    </div>
+    <p style="margin:12px 0 0;color:var(--muted)">Dwa pozostałe rodzaje to osobne przypadki: <strong>ExternalName</strong> to tylko alias DNS na adres spoza klastra, a <strong>Headless</strong> to ClusterIP bez wspólnego IP, w którym DNS zwraca adresy podów.</p>
+  </div>
+
+  <!-- PORTY -->
+  <h2>Trzy porty, które łatwo pomylić</h2>
+  <p>Ruch przechodzi przez maksymalnie trzy numery portów. Tylko <code>targetPort</code> musi zgadzać się z aplikacją.</p>
+  <div class="card">
+    <div class="scroll">
+      <svg class="diagram" viewBox="0 0 1000 150" role="img" aria-label="nodePort na węźle, port Service, targetPort w podzie">
+        <rect class="box" x="20" y="30" width="250" height="80" rx="8"/>
+        <text class="t" x="145" y="60" text-anchor="middle">nodePort: 30080</text>
+        <text class="s" x="145" y="80" text-anchor="middle">na każdym węźle</text>
+        <text class="s" x="145" y="97" text-anchor="middle">tylko NodePort i LoadBalancer</text>
+        <path class="line" d="M270 70 H361"/>
+        <polygon class="arrowhead" points="370,70 361,65 361,75"/>
+        <rect class="svc" x="370" y="30" width="250" height="80" rx="8"/>
+        <text class="t" x="495" y="60" text-anchor="middle">port: 80</text>
+        <text class="s" x="495" y="80" text-anchor="middle">port Service'u</text>
+        <text class="s" x="495" y="97" text-anchor="middle">http://web:80</text>
+        <path class="line" d="M620 70 H711"/>
+        <polygon class="arrowhead" points="720,70 711,65 711,75"/>
+        <rect class="box" x="720" y="30" width="260" height="80" rx="8"/>
+        <text class="t" x="850" y="60" text-anchor="middle">targetPort: 8080</text>
+        <text class="s" x="850" y="80" text-anchor="middle">port kontenera w podzie</text>
+        <text class="s" x="850" y="97" text-anchor="middle">= na nim słucha aplikacja</text>
+        <path class="flow" id="f-ports" d="M145 70 H850"/>
+      </svg>
+    </div>
+    <div class="grid-2" style="margin-top:8px">
+<pre><code>spec:
+  type: NodePort
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 8080
+      nodePort: 30080</code></pre>
+      <div>
+        <p style="margin-top:8px">Pominiesz <code>targetPort</code>, to Kubernetes przyjmie wartość z <code>port</code>. Pominiesz <code>nodePort</code>, to wylosuje wolny z zakresu 30000–32767.</p>
+        <p>Najczęstszy błąd: <code>targetPort</code> wskazuje port, na którym aplikacja nie słucha. Service ma wtedy endpointy, ale połączenie jest odrzucane.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RODZAJE -->
+  <h2>Każdy rodzaj osobno</h2>
+  <p>Wybierz rodzaj. Kropka na diagramie pokazuje, którędy idzie ruch.</p>
+
+  <div class="card">
+    <div class="tabs" role="tablist" aria-label="Rodzaj Service">
+      <button role="tab" data-tab="clusterip">ClusterIP</button>
+      <button role="tab" data-tab="nodeport">NodePort</button>
+      <button role="tab" data-tab="lb">LoadBalancer</button>
+      <button role="tab" data-tab="headless">Headless</button>
+      <button role="tab" data-tab="extname">ExternalName</button>
+    </div>
+
+    <!-- CLUSTERIP -->
+    <div class="panel" role="tabpanel" data-panel="clusterip">
+      <div class="scroll">
+        <svg class="diagram" viewBox="0 0 1000 310" role="img" aria-label="ClusterIP: pod api łączy się przez Service z podami web, laptop nie ma dostępu">
+          <rect class="zone" x="10" y="20" width="170" height="270" rx="12"/>
+          <text class="lbl" x="24" y="44">Poza klastrem</text>
+          <rect class="zone" x="200" y="20" width="790" height="270" rx="12"/>
+          <text class="lbl" x="214" y="44">Klaster</text>
+
+          <rect class="box" x="25" y="215" width="140" height="56" rx="8"/>
+          <text class="t" x="95" y="239" text-anchor="middle">Laptop</text>
+          <text class="s" x="95" y="257" text-anchor="middle">brak dostępu</text>
+          <path class="blocked" d="M165 243 H300"/>
+          <text class="xmark" x="232" y="251" text-anchor="middle">✕</text>
+
+          <rect class="box" x="230" y="110" width="150" height="60" rx="8"/>
+          <text class="t" x="305" y="135" text-anchor="middle">Pod api</text>
+          <text class="s" x="305" y="154" text-anchor="middle">http://web:80</text>
+          <path class="line" d="M380 140 H451"/>
+          <polygon class="arrowhead" points="460,140 451,135 451,145"/>
+
+          <rect class="svc" x="460" y="95" width="200" height="90" rx="8"/>
+          <text class="t" x="560" y="122" text-anchor="middle">Service web</text>
+          <text class="s" x="560" y="142" text-anchor="middle">ClusterIP 10.96.12.34</text>
+          <text class="s" x="560" y="160" text-anchor="middle">port 80</text>
+          <text class="lbl" x="560" y="214" text-anchor="middle">DNS: web</text>
+          <text class="lbl" x="560" y="230" text-anchor="middle">web.szkolenie.svc.cluster.local</text>
+
+          <path class="line" d="M660 140 H700 M700 65 V245 M700 65 H751 M700 155 H751 M700 245 H751"/>
+          <polygon class="arrowhead" points="760,65 751,60 751,70"/>
+          <polygon class="arrowhead" points="760,155 751,150 751,160"/>
+          <polygon class="arrowhead" points="760,245 751,240 751,250"/>
+          <rect class="box" x="760" y="40" width="200" height="50" rx="8"/>
+          <text class="t" x="860" y="62" text-anchor="middle">Pod web · :8080</text>
+          <text class="s" x="860" y="79" text-anchor="middle">app: web</text>
+          <rect class="box" x="760" y="130" width="200" height="50" rx="8"/>
+          <text class="t" x="860" y="152" text-anchor="middle">Pod web · :8080</text>
+          <text class="s" x="860" y="169" text-anchor="middle">app: web</text>
+          <rect class="box" x="760" y="220" width="200" height="50" rx="8"/>
+          <text class="t" x="860" y="242" text-anchor="middle">Pod web · :8080</text>
+          <text class="s" x="860" y="259" text-anchor="middle">app: web</text>
+
+          <path class="flow" id="f-ci-1" d="M305 140 H700 V65 H860"/>
+          <path class="flow" id="f-ci-2" d="M305 140 H700 V155 H860"/>
+          <path class="flow" id="f-ci-3" d="M305 140 H700 V245 H860"/>
+        </svg>
+      </div>
+      <h3>ClusterIP</h3>
+      <p class="sub">Domyślny typ. Adres widoczny tylko wewnątrz klastra.</p>
+      <div class="grid-2">
+        <div>
+          <p>Service dostaje stały wirtualny IP i nazwę w DNS klastra. Ruch rozkłada na pody, które pasują do <code>selector</code> i są Ready. Z laptopa ani z internetu tego adresu nie widać.</p>
+          <h4>Kiedy</h4>
+          <ul>
+            <li>komunikacja między usługami: web → api → mongo w ToDos</li>
+            <li>wszystko, co wystawiasz na zewnątrz przez Ingress</li>
+          </ul>
+          <h4>Sprawdź na kind</h4>
+          <ul>
+            <li><code>kubectl port-forward svc/web 8080:80</code></li>
+            <li><code>kubectl run klient --rm -it --image=busybox:1.37 -- wget -qO- http://web</code></li>
+          </ul>
+        </div>
+<pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  # type: ClusterIP  (domyślnie)
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 8080</code></pre>
+      </div>
+    </div>
+
+    <!-- NODEPORT -->
+    <div class="panel" role="tabpanel" data-panel="nodeport" hidden>
+      <div class="scroll">
+        <svg class="diagram" viewBox="0 0 1000 310" role="img" aria-label="NodePort: klient łączy się z dowolnym węzłem na porcie 30080, dalej Service i pody">
+          <rect class="zone" x="10" y="10" width="170" height="280" rx="12"/>
+          <text class="lbl" x="24" y="30">Sieć węzłów</text>
+          <rect class="zone" x="200" y="10" width="790" height="280" rx="12"/>
+          <text class="lbl" x="214" y="30">Klaster</text>
+
+          <rect class="box" x="25" y="125" width="140" height="66" rx="8"/>
+          <text class="t" x="95" y="150" text-anchor="middle">Klient</text>
+          <text class="s" x="95" y="168" text-anchor="middle">IP-węzła:30080</text>
+
+          <path class="line" d="M165 158 H221"/>
+          <polygon class="arrowhead" points="230,158 221,153 221,163"/>
+          <path class="line dashed" d="M200 158 V68 H221 M200 158 V248 H221"/>
+          <polygon class="arrowhead" points="230,68 221,63 221,73"/>
+          <polygon class="arrowhead" points="230,248 221,243 221,253"/>
+
+          <rect class="box" x="230" y="40" width="170" height="56" rx="8"/>
+          <text class="t" x="315" y="63" text-anchor="middle">worker</text>
+          <text class="s" x="315" y="81" text-anchor="middle">:30080</text>
+          <rect class="box" x="230" y="130" width="170" height="56" rx="8"/>
+          <text class="t" x="315" y="153" text-anchor="middle">worker2</text>
+          <text class="s" x="315" y="171" text-anchor="middle">:30080</text>
+          <rect class="box" x="230" y="220" width="170" height="56" rx="8"/>
+          <text class="t" x="315" y="243" text-anchor="middle">control-plane</text>
+          <text class="s" x="315" y="261" text-anchor="middle">:30080</text>
+
+          <path class="line" d="M400 68 H440 V158 M400 248 H440 V158 M400 158 H471"/>
+          <polygon class="arrowhead" points="480,158 471,153 471,163"/>
+
+          <rect class="svc" x="480" y="108" width="190" height="100" rx="8"/>
+          <text class="t" x="575" y="135" text-anchor="middle">Service web</text>
+          <text class="s" x="575" y="155" text-anchor="middle">type: NodePort</text>
+          <text class="s" x="575" y="173" text-anchor="middle">30080 → 80 → 8080</text>
+          <text class="s" x="575" y="191" text-anchor="middle">+ ClusterIP w środku</text>
+
+          <path class="line" d="M670 158 H710 M710 65 V245 M710 65 H751 M710 155 H751 M710 245 H751"/>
+          <polygon class="arrowhead" points="760,65 751,60 751,70"/>
+          <polygon class="arrowhead" points="760,155 751,150 751,160"/>
+          <polygon class="arrowhead" points="760,245 751,240 751,250"/>
+          <rect class="box" x="760" y="40" width="200" height="50" rx="8"/>
+          <text class="t" x="860" y="62" text-anchor="middle">Pod web</text>
+          <text class="s" x="860" y="79" text-anchor="middle">na worker</text>
+          <rect class="box" x="760" y="130" width="200" height="50" rx="8"/>
+          <text class="t" x="860" y="152" text-anchor="middle">Pod web</text>
+          <text class="s" x="860" y="169" text-anchor="middle">na worker2</text>
+          <rect class="box" x="760" y="220" width="200" height="50" rx="8"/>
+          <text class="t" x="860" y="242" text-anchor="middle">Pod web</text>
+          <text class="s" x="860" y="259" text-anchor="middle">na worker</text>
+
+          <path class="flow" id="f-np-1" d="M95 158 H440 H710 V65 H860"/>
+          <path class="flow" id="f-np-2" d="M95 158 H710 V245 H860"/>
+        </svg>
+      </div>
+      <h3>NodePort</h3>
+      <p class="sub">ClusterIP plus ten sam port otwarty na każdym węźle.</p>
+      <div class="grid-2">
+        <div>
+          <p>Kubernetes otwiera wybrany port (z zakresu 30000–32767) na <strong>wszystkich</strong> węzłach. Wejdziesz przez dowolny węzeł, nawet taki, na którym nie ma poda. kube-proxy przekaże ruch dalej.</p>
+          <h4>Kiedy</h4>
+          <ul>
+            <li>szybki test z sieci, która widzi węzły</li>
+            <li>klastry on-premise z własnym load balancerem przed węzłami</li>
+            <li>rzadko na produkcji: nietypowe porty i adresy węzłów, które się zmieniają</li>
+          </ul>
+          <h4>Na kind</h4>
+          <ul>
+            <li>węzły to kontenery Dockera, więc z laptopa nie dojdziesz do <code>IP-węzła:30080</code> bez <code>extraPortMappings</code></li>
+            <li>test z wnętrza: <code>kubectl get nodes -o wide</code>, potem <code>wget -qO- http://&lt;INTERNAL-IP&gt;:30080</code> z poda busybox</li>
+          </ul>
+        </div>
+<pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  type: NodePort
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 8080
+      nodePort: 30080</code></pre>
+      </div>
+    </div>
+
+    <!-- LOADBALANCER -->
+    <div class="panel" role="tabpanel" data-panel="lb" hidden>
+      <div class="scroll">
+        <svg class="diagram" viewBox="0 0 1000 310" role="img" aria-label="LoadBalancer: użytkownik, load balancer chmury z publicznym IP, węzły, Service, pody">
+          <rect class="zone" x="10" y="10" width="170" height="280" rx="12"/>
+          <text class="lbl" x="24" y="30">Internet / chmura</text>
+          <rect class="zone" x="200" y="10" width="790" height="280" rx="12"/>
+          <text class="lbl" x="214" y="30">Klaster</text>
+
+          <rect class="box" x="25" y="56" width="140" height="50" rx="8"/>
+          <text class="t" x="95" y="78" text-anchor="middle">Użytkownik</text>
+          <text class="s" x="95" y="95" text-anchor="middle">http://20.50.1.10</text>
+          <path class="line" d="M95 106 V131"/>
+          <polygon class="arrowhead" points="95,140 90,131 100,131"/>
+          <rect class="ext" x="25" y="140" width="140" height="80" rx="8"/>
+          <text class="t" x="95" y="165" text-anchor="middle">Load Balancer</text>
+          <text class="s" x="95" y="184" text-anchor="middle">dostawcy chmury</text>
+          <text class="s" x="95" y="202" text-anchor="middle">20.50.1.10:80</text>
+
+          <path class="line" d="M165 180 H200 V68 H221 M200 180 V248 H221 M200 158 H221"/>
+          <polygon class="arrowhead" points="230,68 221,63 221,73"/>
+          <polygon class="arrowhead" points="230,158 221,153 221,163"/>
+          <polygon class="arrowhead" points="230,248 221,243 221,253"/>
+
+          <rect class="box" x="230" y="40" width="170" height="56" rx="8"/>
+          <text class="t" x="315" y="63" text-anchor="middle">węzeł 1</text>
+          <text class="s" x="315" y="81" text-anchor="middle">:31234</text>
+          <rect class="box" x="230" y="130" width="170" height="56" rx="8"/>
+          <text class="t" x="315" y="153" text-anchor="middle">węzeł 2</text>
+          <text class="s" x="315" y="171" text-anchor="middle">:31234</text>
+          <rect class="box" x="230" y="220" width="170" height="56" rx="8"/>
+          <text class="t" x="315" y="243" text-anchor="middle">węzeł 3</text>
+          <text class="s" x="315" y="261" text-anchor="middle">:31234</text>
+
+          <path class="line" d="M400 68 H440 V158 M400 248 H440 V158 M400 158 H471"/>
+          <polygon class="arrowhead" points="480,158 471,153 471,163"/>
+
+          <rect class="svc" x="480" y="108" width="190" height="100" rx="8"/>
+          <text class="t" x="575" y="135" text-anchor="middle">Service web</text>
+          <text class="s" x="575" y="155" text-anchor="middle">type: LoadBalancer</text>
+          <text class="s" x="575" y="173" text-anchor="middle">EXTERNAL-IP 20.50.1.10</text>
+          <text class="s" x="575" y="191" text-anchor="middle">+ NodePort + ClusterIP</text>
+
+          <path class="line" d="M670 158 H710 M710 65 V245 M710 65 H751 M710 155 H751 M710 245 H751"/>
+          <polygon class="arrowhead" points="760,65 751,60 751,70"/>
+          <polygon class="arrowhead" points="760,155 751,150 751,160"/>
+          <polygon class="arrowhead" points="760,245 751,240 751,250"/>
+          <rect class="box" x="760" y="40" width="200" height="50" rx="8"/>
+          <text class="t" x="860" y="70" text-anchor="middle">Pod web</text>
+          <rect class="box" x="760" y="130" width="200" height="50" rx="8"/>
+          <text class="t" x="860" y="160" text-anchor="middle">Pod web</text>
+          <rect class="box" x="760" y="220" width="200" height="50" rx="8"/>
+          <text class="t" x="860" y="250" text-anchor="middle">Pod web</text>
+
+          <path class="flow" id="f-lb-1" d="M95 81 V180 H200 V68 H440 V158 H710 V155 H860"/>
+          <path class="flow" id="f-lb-2" d="M95 81 V180 H200 V248 H440 V158 H710 V245 H860"/>
+        </svg>
+      </div>
+      <h3>LoadBalancer</h3>
+      <p class="sub">NodePort plus zewnętrzny load balancer, którego dostarcza chmura.</p>
+      <div class="grid-2">
+        <div>
+          <p>Kubernetes prosi dostawcę chmury (AKS, EKS, GKE) o load balancer z publicznym IP. Ten rozsyła ruch na NodePort węzłów. Adres zobaczysz w kolumnie <code>EXTERNAL-IP</code> w <code>kubectl get svc</code>.</p>
+          <h4>Kiedy</h4>
+          <ul>
+            <li>wystawienie pojedynczej usługi w chmurze, także ruchu innego niż HTTP (TCP, UDP)</li>
+            <li>wystawienie samego Ingress Controllera: jeden LoadBalancer i wiele aplikacji za Ingressem</li>
+          </ul>
+          <h4>Na kind</h4>
+          <ul>
+            <li>bez chmury <code>EXTERNAL-IP</code> zostaje w stanie <code>&lt;pending&gt;</code>; potrzeba dodatku <code>cloud-provider-kind</code> albo MetalLB</li>
+            <li>każdy LoadBalancer w chmurze to osobny, płatny zasób</li>
+          </ul>
+        </div>
+<pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  type: LoadBalancer
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 8080</code></pre>
+      </div>
+    </div>
+
+    <!-- HEADLESS -->
+    <div class="panel" role="tabpanel" data-panel="headless" hidden>
+      <div class="scroll">
+        <svg class="diagram" viewBox="0 0 1000 310" role="img" aria-label="Headless: DNS zwraca adresy podów, klient łączy się bezpośrednio z wybranym podem">
+          <rect class="zone" x="10" y="20" width="980" height="270" rx="12"/>
+          <text class="lbl" x="24" y="44">Klaster</text>
+
+          <rect class="box" x="30" y="120" width="160" height="60" rx="8"/>
+          <text class="t" x="110" y="145" text-anchor="middle">Pod klient</text>
+          <text class="s" x="110" y="164" text-anchor="middle">mongo-0.mongo</text>
+
+          <rect class="svc" x="270" y="40" width="240" height="70" rx="8"/>
+          <text class="t" x="390" y="66" text-anchor="middle">Service mongo</text>
+          <text class="s" x="390" y="86" text-anchor="middle">clusterIP: None · brak wspólnego IP</text>
+
+          <path class="line dashed" d="M190 165 H230 V240 H261"/>
+          <polygon class="arrowhead" points="270,240 261,235 261,245"/>
+          <text class="lbl" x="200" y="210">pytanie DNS</text>
+          <rect class="box" x="270" y="200" width="240" height="80" rx="8"/>
+          <text class="t" x="390" y="225" text-anchor="middle">DNS: mongo →</text>
+          <text class="s" x="390" y="245" text-anchor="middle">10.244.1.5, 10.244.2.7, 10.244.1.9</text>
+          <text class="s" x="390" y="263" text-anchor="middle">mongo-0.mongo → 10.244.1.5</text>
+          <path class="line dashed" d="M390 110 V191"/>
+          <polygon class="arrowhead" points="390,200 385,191 395,191"/>
+
+          <path class="line" d="M190 140 H620 M620 65 V245 M620 65 H711 M620 155 H711 M620 245 H711 M600 140 H620"/>
+          <polygon class="arrowhead" points="720,65 711,60 711,70"/>
+          <polygon class="arrowhead" points="720,155 711,150 711,160"/>
+          <polygon class="arrowhead" points="720,245 711,240 711,250"/>
+          <text class="lbl" x="560" y="130" text-anchor="middle">prosto do IP poda</text>
+
+          <rect class="box" x="720" y="40" width="250" height="50" rx="8"/>
+          <text class="t" x="845" y="62" text-anchor="middle">mongo-0 · 10.244.1.5</text>
+          <text class="s" x="845" y="79" text-anchor="middle">StatefulSet: stała nazwa</text>
+          <rect class="box" x="720" y="130" width="250" height="50" rx="8"/>
+          <text class="t" x="845" y="152" text-anchor="middle">mongo-1 · 10.244.2.7</text>
+          <text class="s" x="845" y="169" text-anchor="middle">mongo-1.mongo</text>
+          <rect class="box" x="720" y="220" width="250" height="50" rx="8"/>
+          <text class="t" x="845" y="242" text-anchor="middle">mongo-2 · 10.244.1.9</text>
+          <text class="s" x="845" y="259" text-anchor="middle">mongo-2.mongo</text>
+
+          <path class="flow" id="f-hl-1" d="M110 150 H620 V65 H845"/>
+        </svg>
+      </div>
+      <h3>Headless</h3>
+      <p class="sub">ClusterIP bez wspólnego IP: DNS zwraca adresy samych podów.</p>
+      <div class="grid-2">
+        <div>
+          <p>Ustawiasz <code>clusterIP: None</code>. Service nie rozkłada ruchu. Zapytanie DNS o <code>mongo</code> zwraca listę IP gotowych podów i klient sam wybiera, z którym się połączyć. Ze StatefulSetem każdy pod ma też własną, stałą nazwę: <code>mongo-0.mongo</code>.</p>
+          <h4>Kiedy</h4>
+          <ul>
+            <li>bazy danych i klastry (MongoDB replica set, Kafka, Elasticsearch), gdzie klient musi trafić do konkretnej instancji, np. primary</li>
+            <li>StatefulSet: <code>serviceName</code> wskazuje właśnie Service headless</li>
+          </ul>
+          <h4>Sprawdź na kind</h4>
+          <ul>
+            <li><code>kubectl run dns --rm -it --image=busybox:1.37 -- nslookup mongo</code>: kilka adresów zamiast jednego</li>
+          </ul>
+        </div>
+<pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  clusterIP: None
+  selector:
+    app: mongo
+  ports:
+    - port: 27017</code></pre>
+      </div>
+    </div>
+
+    <!-- EXTERNALNAME -->
+    <div class="panel" role="tabpanel" data-panel="extname" hidden>
+      <div class="scroll">
+        <svg class="diagram" viewBox="0 0 1000 310" role="img" aria-label="ExternalName: DNS klastra zwraca alias, pod łączy się bezpośrednio z bazą poza klastrem">
+          <rect class="zone" x="10" y="20" width="600" height="270" rx="12"/>
+          <text class="lbl" x="24" y="44">Klaster</text>
+          <rect class="zone" x="630" y="20" width="360" height="270" rx="12"/>
+          <text class="lbl" x="644" y="44">Poza klastrem</text>
+
+          <rect class="box" x="40" y="120" width="170" height="60" rx="8"/>
+          <text class="t" x="125" y="145" text-anchor="middle">Pod api</text>
+          <text class="s" x="125" y="164" text-anchor="middle">baza:5432</text>
+
+          <rect class="svc" x="320" y="40" width="250" height="70" rx="8"/>
+          <text class="t" x="445" y="66" text-anchor="middle">Service baza</text>
+          <text class="s" x="445" y="86" text-anchor="middle">type: ExternalName · bez selektora</text>
+          <path class="line dashed" d="M445 110 V191"/>
+          <polygon class="arrowhead" points="445,200 440,191 450,191"/>
+
+          <path class="line dashed" d="M125 180 V230 H311"/>
+          <polygon class="arrowhead" points="320,230 311,225 311,235"/>
+          <text class="lbl" x="135" y="220">pytanie DNS</text>
+          <rect class="box" x="320" y="200" width="250" height="70" rx="8"/>
+          <text class="t" x="445" y="226" text-anchor="middle">DNS: baza →</text>
+          <text class="s" x="445" y="246" text-anchor="middle">CNAME db.firma.example.com</text>
+
+          <path class="line" d="M210 150 H691"/>
+          <polygon class="arrowhead" points="700,150 691,145 691,155"/>
+          <text class="lbl" x="660" y="138" text-anchor="end">połączenie bezpośrednio</text>
+
+          <rect class="ext" x="700" y="110" width="270" height="80" rx="8"/>
+          <text class="t" x="835" y="140" text-anchor="middle">db.firma.example.com</text>
+          <text class="s" x="835" y="160" text-anchor="middle">baza zarządzana w chmurze</text>
+          <text class="s" x="835" y="177" text-anchor="middle">albo serwer w serwerowni</text>
+
+          <path class="flow" id="f-en-1" d="M125 150 H835"/>
+        </svg>
+      </div>
+      <h3>ExternalName</h3>
+      <p class="sub">Alias DNS na adres spoza klastra. Bez IP, bez podów i bez proxy.</p>
+      <div class="grid-2">
+        <div>
+          <p>DNS klastra odpowiada na pytanie o <code>baza</code> rekordem CNAME: <code>db.firma.example.com</code>. Aplikacja łączy się prosto z tym adresem. Kubernetes nie pośredniczy w ruchu i nie sprawdza, czy serwer działa.</p>
+          <h4>Kiedy</h4>
+          <ul>
+            <li>aplikacja ma w konfiguracji krótką nazwę <code>baza</code>, a baza jest poza klastrem</li>
+            <li>przenosiny: dziś baza zewnętrzna, jutro pod w klastrze, a w aplikacji nic się nie zmienia</li>
+          </ul>
+          <h4>Uwaga</h4>
+          <ul>
+            <li>HTTPS i nagłówek <code>Host</code> dalej widzą <code>baza</code>, więc certyfikat serwera może nie pasować</li>
+            <li>pole <code>ports</code> nie ma znaczenia, port podaje aplikacja</li>
+          </ul>
+        </div>
+<pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: baza
+spec:
+  type: ExternalName
+  externalName: db.firma.example.com</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- PORÓWNANIE -->
+  <h2>Porównanie</h2>
+  <p>Jedna tabela do szybkiego wyboru.</p>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Rodzaj</th><th>Adres</th><th>Skąd dostępny</th><th>Typowe użycie</th><th>Na kind</th></tr>
+      <tr><td><strong>ClusterIP</strong></td><td>wewnętrzny IP + DNS</td><td>tylko z klastra</td><td>usługa → usługa, za Ingressem</td><td><span class="tag ok">działa</span></td></tr>
+      <tr><td><strong>NodePort</strong></td><td>IP węzła : 30000–32767</td><td>z sieci, która widzi węzły</td><td>testy, on-premise</td><td><span class="tag warn">tylko z wnętrza</span></td></tr>
+      <tr><td><strong>LoadBalancer</strong></td><td>zewnętrzny IP</td><td>z internetu lub sieci firmowej</td><td>usługa w chmurze, Ingress Controller</td><td><span class="tag warn">&lt;pending&gt; bez dodatku</span></td></tr>
+      <tr><td><strong>Headless</strong></td><td>IP podów w DNS</td><td>tylko z klastra</td><td>StatefulSet, bazy, klastry</td><td><span class="tag ok">działa</span></td></tr>
+      <tr><td><strong>ExternalName</strong></td><td>CNAME</td><td>tylko z klastra</td><td>alias na usługę zewnętrzną</td><td><span class="tag ok">działa</span></td></tr>
+    </table>
+  </div>
+
+  <div class="note">
+    <strong>A Ingress?</strong> Ingress nie jest rodzajem Service. To reguły HTTP („host i ścieżka → Service”), które obsługuje Ingress Controller. Typowy układ w chmurze: <strong>jeden</strong> LoadBalancer przed Ingress Controllerem i wiele aplikacji jako ClusterIP za nim. Na naszym kind Traefik słucha wprost na porcie 80 węzła. Szczegóły: <a href="k8s-droga-zapytania.html">droga zapytania</a>.
+  </div>
+
+  <h2>Jak to zobaczyć u siebie</h2>
+  <p>Polecenia do lab08.</p>
+  <div class="card table-wrap">
+    <table>
+      <tr><th>Chcesz zobaczyć</th><th>Polecenie</th></tr>
+      <tr><td>typ, ClusterIP, EXTERNAL-IP, porty</td><td><code>kubectl get svc -o wide</code></td></tr>
+      <tr><td>do których podów trafia ruch</td><td><code>kubectl get endpointslices -l kubernetes.io/service-name=web</code></td></tr>
+      <tr><td>selektor i porty jednego Service</td><td><code>kubectl describe svc web</code></td></tr>
+      <tr><td>co zwraca DNS klastra</td><td><code>kubectl run dns --rm -it --image=busybox:1.37 -- nslookup web</code></td></tr>
+      <tr><td>dostęp z laptopa bez zmiany typu</td><td><code>kubectl port-forward svc/web 8080:80</code></td></tr>
+    </table>
+  </div>
+
+  <footer>Inne strony: <a href="k8s-droga-zapytania.html">droga zapytania</a> · <a href="diagnostyka-poda.html">diagnostyka poda</a> · <a href="compose-vs-k8s.html">Compose a Kubernetes</a> · <a href="cert-manager.html">cert-manager</a> · <a href="kubectl.md">ściąga kubectl</a></footer>
+</main>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // animowane kropki po ścieżkach .flow
+  if (!reduce) {
+    document.querySelectorAll("svg.diagram").forEach(function (svg) {
+      svg.querySelectorAll("path.flow").forEach(function (p, i) {
+        var c = document.createElementNS(NS, "circle");
+        c.setAttribute("r", "6");
+        c.setAttribute("class", "packet");
+        var a = document.createElementNS(NS, "animateMotion");
+        a.setAttribute("dur", "2.8s");
+        a.setAttribute("repeatCount", "indefinite");
+        a.setAttribute("begin", (-i * 1.4) + "s");
+        var m = document.createElementNS(NS, "mpath");
+        m.setAttribute("href", "#" + p.id);
+        a.appendChild(m);
+        c.appendChild(a);
+        svg.appendChild(c);
+      });
+    });
+  }
+
+  // zakładki
+  var tabs = document.querySelectorAll("[data-tab]");
+  function show(k) {
+    tabs.forEach(function (t) {
+      var on = t.getAttribute("data-tab") === k;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+    });
+    document.querySelectorAll("[data-panel]").forEach(function (p) {
+      p.hidden = p.getAttribute("data-panel") !== k;
+    });
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener("click", function () { show(t.getAttribute("data-tab")); });
+    t.addEventListener("keydown", function (e) {
+      var d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (!d) return;
+      var n = tabs[(i + d + tabs.length) % tabs.length];
+      n.focus();
+      show(n.getAttribute("data-tab"));
+      e.preventDefault();
+    });
+  });
+  show("clusterip");
+})();
+</script>
+</body>
+</html>
